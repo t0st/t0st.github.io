@@ -1,0 +1,179 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" type="image/svg+xml" href="/svg/logo.svg"><link rel="canonical" href="https://tost.dev/blog/hardened_oci_images/"><title>🐋 Hardened OCI Images | tost.dev</title><meta name="description" content="Docker vs Chainguard and how to build your own with melange + apko"><meta name="generator" content="Astro v6.1.3"><!-- OpenGraph --><meta property="og:type" content="website"><meta property="og:url" content="https://tost.dev/blog/hardened_oci_images/"><meta property="og:title" content="🐋 Hardened OCI Images | tost.dev"><meta property="og:description" content="Docker vs Chainguard and how to build your own with melange + apko"><meta property="og:image" content="https://tost.dev/svg/logo.svg"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="🐋 Hardened OCI Images | tost.dev"><meta name="twitter:description" content="Docker vs Chainguard and how to build your own with melange + apko"><meta name="twitter:image" content="https://tost.dev/svg/logo.svg"><!-- CSP --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://giscus.app; img-src 'self' data: https:; connect-src 'self'"><style>.giscus-wrapper[data-astro-cid-an2nl7ar]{width:100%}.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus,.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus iframe{width:100%!important}
+</style>
+<link rel="stylesheet" href="/_astro/global.DOHSpaZS.css"></head> <body class="min-h-screen flex flex-col">  <header class="border-b border-border/50 backdrop-blur-md bg-base/80 sticky top-0 z-50"> <nav class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="flex items-center gap-2 group"> <img src="/svg/logo.svg" alt="" class="h-12 w-12 transition-transform duration-300 hover:rotate-12 hover:-translate-y-2"> <span class="font-mono font-semibold text-heading">tost.dev</span> </a> <!-- Desktop nav --> <div class="hidden sm:flex items-center gap-6"> <a href="/" class="text-sm text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="text-sm text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="text-sm text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="text-sm text-muted hover:text-cyan transition-colors"> Snippets </a> </div> <!-- Mobile toggle --> <button id="mobile-menu-btn" class="sm:hidden p-2 text-muted hover:text-cyan" aria-expanded="false" aria-controls="mobile-menu" aria-label="Toggle menu"> <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </nav> <!-- Mobile menu --> <div id="mobile-menu" class="hidden sm:hidden border-t border-border/50 px-4 pb-4"> <a href="/" class="block py-2 text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="block py-2 text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="block py-2 text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="block py-2 text-muted hover:text-cyan transition-colors"> Snippets </a> </div> </header> <script type="module">const e=document.getElementById("mobile-menu-btn"),n=document.getElementById("mobile-menu");e?.addEventListener("click",()=>{const t=n?.classList.toggle("hidden")===!1;e.setAttribute("aria-expanded",String(t))});</script> <main class="flex-1 max-w-5xl mx-auto px-4 py-8 sm:py-12 w-full"> <article> <header class="mb-10"> <div class="flex flex-wrap gap-2 mb-4"> <a href="/tags/containers" class="text-xs font-mono px-2 py-0.5 rounded bg-purple/10 text-purple border border-purple/20 hover:bg-purple/20 transition-colors"> containers </a><a href="/tags/security" class="text-xs font-mono px-2 py-0.5 rounded bg-purple/10 text-purple border border-purple/20 hover:bg-purple/20 transition-colors"> security </a> </div> <h1 class="text-2xl sm:text-3xl font-bold text-heading mb-3">🐋 Hardened OCI Images</h1> <div class="flex gap-4 text-sm text-muted font-mono"> <time datetime="2026-03-18T00:00:00.000Z">March 18, 2026</time> <span>8 min read</span> </div> </header> <div class="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8"> <div class="prose prose-invert prose-cyan
+          prose-headings:text-heading prose-headings:font-semibold
+          prose-a:text-cyan prose-a:no-underline hover:prose-a:underline
+          prose-code:text-magenta prose-code:bg-surface prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-surface prose-pre:border prose-pre:border-border/50 prose-pre:rounded-xl prose-pre:overflow-x-auto
+          [&_pre_code]:text-inherit [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-sm
+          prose-img:rounded-xl prose-img:border prose-img:border-border/50
+          prose-strong:text-heading
+          break-words">  <h2 id="why-hardened-images-matter">Why Hardened Images Matter</h2>
+<p>Every container image you ship is an attack surface. A typical Debian- or Ubuntu-based image carries hundreds of packages — shells, package managers, compilers, libraries — most of which your application never touches. But vulnerability scanners don’t care about intent. They report every CVE in every installed package, and attackers don’t discriminate either. A single exploitable binary in your base image is enough.</p>
+<p>Hardened images flip the approach: start with nothing and add only what your application needs to run. No shell, no package manager, no leftover build tools. The result is a smaller image with fewer CVEs, a predictable software bill of materials (SBOM), and a surface that’s actually auditable. If you’ve ever triaged a Grype scan with 200+ findings on a base image you don’t control, you know why this matters.</p>
+<p>There’s a second dimension beyond security: reproducibility. If you can’t rebuild the same image from the same inputs and get the same output, you can’t verify what’s running in production. Traditional Dockerfiles are inherently non-reproducible — <code>apt-get update</code> gives you different packages depending on when you run it. Hardened image tooling addresses this head-on with pinned sources, locked dependencies, and deterministic builds.</p>
+<hr>
+<h2 id="docker-hardened-images-vs-chainguard-images">Docker Hardened Images vs Chainguard Images</h2>
+<p>Both Docker and Chainguard offer hardened base images, but they take fundamentally different approaches.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Aspect</th><th>Docker hardened images</th><th>Chainguard images</th></tr></thead><tbody><tr><td>Approach</td><td>Curated, slimmed-down Debian/Ubuntu bases</td><td>Built from scratch with apk packages on a Wolfi base</td></tr><tr><td>Minimality</td><td>Reduced — removes unnecessary packages but retains OS layer</td><td>Extreme — no shell, no package manager by default</td></tr><tr><td>Reproducibility</td><td>Limited — depends on upstream apt repos at build time</td><td>High — pinned package versions, lockfiles, deterministic builds</td></tr><tr><td>SBOM &#x26; provenance</td><td>Available via Docker Scout</td><td>Built-in SBOMs (SPDX), Sigstore signatures on every image</td></tr><tr><td>Update cadence</td><td>Follows upstream Debian/Ubuntu release cycles</td><td>Daily rebuilds, patches within hours of upstream fixes</td></tr><tr><td>Compatibility</td><td>Drop-in replacement for standard Docker images</td><td>May require adaptation — no shell means no <code>docker exec</code> debugging</td></tr><tr><td>Best-fit use cases</td><td>Teams migrating from standard images with minimal disruption</td><td>Security-critical workloads, compliance-heavy environments, supply-chain-aware orgs</td></tr></tbody></table>
+<p>Docker’s hardened images are the pragmatic choice when you need a quick improvement over stock base images. Chainguard images are the choice when you want to minimize CVEs to near-zero and need verifiable provenance baked into every layer.</p>
+<hr>
+<h2 id="melange-and-apko-the-building-blocks">melange and apko: The Building Blocks</h2>
+<p>If you want to build your own hardened images — not just consume Chainguard’s — you need two tools: <strong>melange</strong> and <strong>apko</strong>. They’re separate tools that complement each other in a clean pipeline.</p>
+<p><strong>melange</strong> is a package builder. It takes your source code (or a tarball, or a Go module) and produces an <code>.apk</code> package — the same format used by Alpine and Wolfi. You define the build steps, dependencies, and metadata in a YAML file. Think of it as a declarative <code>dpkg-buildpackage</code> or <code>rpmbuild</code>, but designed for minimal, reproducible output.</p>
+<p><strong>apko</strong> is an image assembler. It takes a list of <code>.apk</code> packages and assembles them into an OCI image — no Dockerfile, no <code>RUN</code> commands, no shell. You declare which packages go into the image, what user it runs as, and what the entrypoint is. apko resolves dependencies, installs packages, and produces a deterministic image with an SBOM baked in.</p>
+<p>The pipeline is straightforward: melange builds your app into a package, apko assembles that package (plus any runtime dependencies) into a minimal OCI image.</p>
+<hr>
+<h2 id="step-by-step-workflow">Step-by-Step Workflow</h2>
+<p>Here’s the end-to-end flow for packaging a Go web app and shipping it as a hardened OCI image.</p>
+<ol>
+<li><strong>Package your app with melange</strong> — define a <code>melange.yaml</code> that compiles your Go binary and produces an <code>.apk</code></li>
+<li><strong>Publish the apk</strong> — output goes to a local repository directory (or an apk registry if you have one)</li>
+<li><strong>Define your image with apko</strong> — write an <code>apko.yaml</code> that references your apk plus any runtime dependencies</li>
+<li><strong>Build and publish with apko</strong> — produces an OCI image and pushes it to your registry</li>
+<li><strong>Sign and verify in CI</strong> — use Cosign to sign the image, verify the SBOM</li>
+<li><strong>Runtime hardening</strong> — run as non-root, read-only filesystem, no capabilities</li>
+</ol>
+<hr>
+<h2 id="example-a-go-web-app">Example: A Go Web App</h2>
+<h3 id="melangeyaml">melange.yaml</h3>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#F7768E">package</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> myapp</span></span>
+<span class="line"><span style="color:#F7768E">  version</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 1.0.0</span></span>
+<span class="line"><span style="color:#F7768E">  epoch</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 0</span></span>
+<span class="line"><span style="color:#F7768E">  description</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> A simple Go web server</span></span>
+<span class="line"><span style="color:#F7768E">  copyright</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#F7768E"> license</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> MIT</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F7768E">environment</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  contents</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">    packages</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">      -</span><span style="color:#9ECE6A"> go</span></span>
+<span class="line"><span style="color:#9ABDF5">      -</span><span style="color:#9ECE6A"> busybox</span><span style="color:#51597D;font-style:italic"> # provides basic build utilities</span></span>
+<span class="line"><span style="color:#9ABDF5">      -</span><span style="color:#9ECE6A"> ca-certificates-bundle</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F7768E">pipeline</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">  -</span><span style="color:#F7768E"> uses</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> go/build</span></span>
+<span class="line"><span style="color:#F7768E">    with</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">      packages</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> ./cmd/server</span></span>
+<span class="line"><span style="color:#F7768E">      output</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> myapp</span></span></code></pre>
+<p>Key points: <code>epoch</code> tracks rebuilds of the same version. The <code>go/build</code> pipeline is a built-in melange pipeline that handles <code>GOMODCACHE</code>, cross-compilation flags, and stripping. The output is a statically linked binary.</p>
+<p>Build it:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#C0CAF5">melange</span><span style="color:#9ECE6A"> build</span><span style="color:#9ECE6A"> melange.yaml</span><span style="color:#89DDFF"> \</span></span>
+<span class="line"><span style="color:#E0AF68">  --arch</span><span style="color:#9ECE6A"> x86_64</span><span style="color:#89DDFF"> \</span></span>
+<span class="line"><span style="color:#E0AF68">  --signing-key</span><span style="color:#9ECE6A"> melange.rsa</span><span style="color:#89DDFF"> \</span></span>
+<span class="line"><span style="color:#E0AF68">  --out-dir</span><span style="color:#9ECE6A"> ./packages/</span></span></code></pre>
+<p>This produces <code>packages/x86_64/myapp-1.0.0-r0.apk</code> and a signed index.</p>
+<h3 id="apkoyaml">apko.yaml</h3>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#F7768E">contents</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  packages</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#9ECE6A"> myapp</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#9ECE6A"> ca-certificates-bundle=20251003-r3</span></span>
+<span class="line"><span style="color:#F7768E">  repositories</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#9ECE6A"> ./packages/</span><span style="color:#51597D;font-style:italic"> # local repo from melange build</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#9ECE6A"> https://packages.wolfi.dev/os</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F7768E">accounts</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  groups</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#F7768E"> groupname</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> app</span></span>
+<span class="line"><span style="color:#F7768E">      gid</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 1000</span></span>
+<span class="line"><span style="color:#F7768E">  users</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#F7768E"> username</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> app</span></span>
+<span class="line"><span style="color:#F7768E">      uid</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 1000</span></span>
+<span class="line"><span style="color:#F7768E">      gid</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 1000</span></span>
+<span class="line"><span style="color:#F7768E">  run-as</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 1000</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F7768E">entrypoint</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  command</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> /usr/bin/myapp</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F7768E">archs</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">  -</span><span style="color:#9ECE6A"> x86_64</span></span></code></pre>
+<p>Key points: no <code>RUN</code> steps — apko doesn’t support them. The <code>accounts</code> block creates a non-root user. <code>ca-certificates-bundle</code> is included so the app can make HTTPS calls. The package is pinned to the fixed version <code>20251003-r3</code>. The <code>repositories</code> field points to both the local melange output and the Wolfi package repo for runtime dependencies.</p>
+<p>Build it:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#C0CAF5">apko</span><span style="color:#9ECE6A"> build</span><span style="color:#9ECE6A"> apko.yaml</span><span style="color:#89DDFF"> \</span></span>
+<span class="line"><span style="color:#9ECE6A">  myapp:1.0.0</span><span style="color:#89DDFF"> \</span></span>
+<span class="line"><span style="color:#9ECE6A">  myapp.tar</span><span style="color:#89DDFF"> \</span></span>
+<span class="line"><span style="color:#E0AF68">  --keyring-append</span><span style="color:#9ECE6A"> melange.rsa.pub</span></span></code></pre>
+<p>This produces <code>myapp.tar</code> (an OCI image) and an SBOM in SPDX format. Push it to your registry:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#C0CAF5">crane</span><span style="color:#9ECE6A"> push</span><span style="color:#9ECE6A"> myapp.tar</span><span style="color:#9ECE6A"> ghcr.io/yourorg/myapp:1.0.0</span></span></code></pre>
+<h3 id="ci-signing-and-verification">CI Signing and Verification</h3>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#51597D;font-style:italic"># Sign with Cosign (keyless, using your CI's OIDC identity)</span></span>
+<span class="line"><span style="color:#C0CAF5">cosign</span><span style="color:#9ECE6A"> sign</span><span style="color:#9ECE6A"> ghcr.io/yourorg/myapp:1.0.0</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#51597D;font-style:italic"># Verify the SBOM</span></span>
+<span class="line"><span style="color:#C0CAF5">cosign</span><span style="color:#9ECE6A"> verify-attestation</span><span style="color:#9ECE6A"> ghcr.io/yourorg/myapp:1.0.0</span><span style="color:#89DDFF"> \</span></span>
+<span class="line"><span style="color:#E0AF68">  --type</span><span style="color:#9ECE6A"> spdxjson</span><span style="color:#89DDFF"> \</span></span>
+<span class="line"><span style="color:#E0AF68">  --certificate-oidc-issuer</span><span style="color:#9ECE6A"> https://token.actions.githubusercontent.com</span></span></code></pre>
+<hr>
+<h2 id="practical-tips-and-pitfalls">Practical Tips and Pitfalls</h2>
+<ul>
+<li>▶️ <strong>No RUN steps in apko.</strong> This is the biggest mental shift. You can’t <code>apt-get install</code> or run arbitrary commands during image assembly. Everything must be a pre-built apk. If you need a config file baked in, package it with melange or use apko’s <code>paths</code> directive.</li>
+<li>▶️ <strong>Pin your sources.</strong> melange supports pinning source tarballs by SHA256 and Go modules by <code>go.sum</code>. You can also pin the apk versions in your apko file (see the example above). Unpinned sources break reproducibility and open you up to supply-chain attacks.</li>
+<li>▶️ <strong>Watch for dependency creep.</strong> Adding one apk can pull in transitive dependencies you didn’t expect. Run <code>apko show-packages apko.yaml</code> to audit what’s actually going into your image before you build.</li>
+<li>▶️ <strong>Your CI pipeline will need rework.</strong> Dockerfile-based pipelines don’t translate 1:1. You’ll need separate stages for melange and apko, signing key management, and possibly a local apk repository. Plan for this upfront.</li>
+<li>▶️ <strong>Testing and repro checks.</strong> Build the same image twice from the same inputs and compare digests. If they differ, something isn’t pinned. apko is designed for reproducibility, but only if you lock everything down — package versions, repository snapshots, architectures.</li>
+<li>▶️ <strong>Debugging without a shell.</strong> Your production image won’t have <code>sh</code>. Use ephemeral debug containers (<code>kubectl debug</code>) or build a separate <code>-dev</code> variant with a shell for troubleshooting. Chainguard publishes <code>:latest-dev</code> tags for exactly this reason.</li>
+</ul>
+<hr>
+<h2 id="when-to-choose-what">When to Choose What</h2>
+<p><strong>Stick with Docker hardened images</strong> if you need a quick security improvement over stock base images, your team relies on Dockerfile workflows, and you’re not yet ready to rethink your build pipeline. Docker Scout gives you vulnerability scanning and SBOMs without changing your tooling.</p>
+<p><strong>Go with Chainguard base images</strong> if you want near-zero CVE base images out of the box, need verifiable provenance and signatures, and can accept the trade-off of no-shell images. This is the fastest path to hardened images without building your own tooling.</p>
+<p><strong>Build your own with melange + apko</strong> if you need full control over what goes into your images, want reproducible builds tied to your own supply chain, or have custom software that doesn’t fit into existing base images. This is the most effort upfront but gives you the most control and the smallest possible attack surface.</p>
+<hr>
+<h2 id="try-it">Try It</h2>
+<p>The melange + apko workflow is surprisingly approachable once you get past the “no Dockerfile” mindset. Start with a simple Go or Rust binary, package it with melange, assemble it with apko, and compare the Grype scan results against your current Dockerfile-based image. The difference is usually dramatic. If you want a working example repo with CI integration, drop a comment below — happy to share.</p>
+<hr>
+<h2 id="further-reading">Further Reading</h2>
+<ul>
+<li><a href="https://edu.chainguard.dev/open-source/build-tools/melange/getting-started-with-melange/">Chainguard Academy — Getting started with melange</a></li>
+<li><a href="https://edu.chainguard.dev/open-source/build-tools/apko/getting-started-with-apko/">Chainguard Academy — Getting started with apko</a></li>
+<li><a href="https://github.com/wolfi-dev">Wolfi — The Linux undistro</a></li>
+<li><a href="https://docs.sigstore.dev/cosign/signing/signing_with_containers/">Sigstore Cosign — Container signing</a></li>
+<li><a href="https://docs.docker.com/scout/">Docker Scout — Image analysis</a></li>
+<li><a href="https://slsa.dev/">SLSA — Supply-chain Levels for Software Artifacts</a></li>
+</ul>  </div> <aside class="hidden lg:block"> <div class="sticky top-20"> <nav class="glass-panel p-4 text-sm" aria-label="Table of contents"><h2 class="font-semibold text-heading mb-3">Contents</h2><ul class="space-y-1.5"><li class><a href="#why-hardened-images-matter" class="text-muted hover:text-cyan transition-colors">Why Hardened Images Matter</a></li><li class><a href="#docker-hardened-images-vs-chainguard-images" class="text-muted hover:text-cyan transition-colors">Docker Hardened Images vs Chainguard Images</a></li><li class><a href="#melange-and-apko-the-building-blocks" class="text-muted hover:text-cyan transition-colors">melange and apko: The Building Blocks</a></li><li class><a href="#step-by-step-workflow" class="text-muted hover:text-cyan transition-colors">Step-by-Step Workflow</a></li><li class><a href="#example-a-go-web-app" class="text-muted hover:text-cyan transition-colors">Example: A Go Web App</a></li><li class="ml-4"><a href="#melangeyaml" class="text-muted hover:text-cyan transition-colors">melange.yaml</a></li><li class="ml-4"><a href="#apkoyaml" class="text-muted hover:text-cyan transition-colors">apko.yaml</a></li><li class="ml-4"><a href="#ci-signing-and-verification" class="text-muted hover:text-cyan transition-colors">CI Signing and Verification</a></li><li class><a href="#practical-tips-and-pitfalls" class="text-muted hover:text-cyan transition-colors">Practical Tips and Pitfalls</a></li><li class><a href="#when-to-choose-what" class="text-muted hover:text-cyan transition-colors">When to Choose What</a></li><li class><a href="#try-it" class="text-muted hover:text-cyan transition-colors">Try It</a></li><li class><a href="#further-reading" class="text-muted hover:text-cyan transition-colors">Further Reading</a></li></ul></nav> </div> </aside> </div> <section class="mt-12 w-full" aria-label="Comments" data-astro-cid-an2nl7ar> <div class="giscus-wrapper" data-astro-cid-an2nl7ar> <script src="https://giscus.app/client.js" data-repo="t0st/t0st.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkzMzgxMzk5ODQ=" data-category="Comments" data-category-id="MDE4OkRpc2N1c3Npb25DYXRlZ29yeTMyNTczOTU0" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="https://tost.dev/giscus.css" data-lang="en" crossorigin="anonymous" async></script> </div> </section> </article> </main> <footer class="border-t border-border/50 mt-auto py-8"> <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted"> <span>&copy; 2026 tost.dev</span> <div class="flex gap-4"> <a href="https://github.com/t0st" target="_blank" rel="noopener noreferrer" class="hover:text-cyan transition-colors" aria-label="GitHub"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a> <a href="/rss.xml" class="hover:text-cyan transition-colors" aria-label="RSS Feed"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M6.18 15.64a2.18 2.18 0 010 4.36 2.18 2.18 0 010-4.36M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z"></path> </svg> </a> </div> </div> </footer>  </body></html>

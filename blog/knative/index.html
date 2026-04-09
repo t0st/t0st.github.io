@@ -1,0 +1,234 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" type="image/svg+xml" href="/svg/logo.svg"><link rel="canonical" href="https://tost.dev/blog/knative/"><title>🚀 KEDA + Knative | tost.dev</title><meta name="description" content="Autoscaling Beyond Kubernetes"><meta name="generator" content="Astro v6.1.3"><!-- OpenGraph --><meta property="og:type" content="website"><meta property="og:url" content="https://tost.dev/blog/knative/"><meta property="og:title" content="🚀 KEDA + Knative | tost.dev"><meta property="og:description" content="Autoscaling Beyond Kubernetes"><meta property="og:image" content="https://tost.dev/svg/logo.svg"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="🚀 KEDA + Knative | tost.dev"><meta name="twitter:description" content="Autoscaling Beyond Kubernetes"><meta name="twitter:image" content="https://tost.dev/svg/logo.svg"><!-- CSP --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://giscus.app; img-src 'self' data: https:; connect-src 'self'"><style>.giscus-wrapper[data-astro-cid-an2nl7ar]{width:100%}.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus,.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus iframe{width:100%!important}
+</style>
+<link rel="stylesheet" href="/_astro/global.DOHSpaZS.css"></head> <body class="min-h-screen flex flex-col">  <header class="border-b border-border/50 backdrop-blur-md bg-base/80 sticky top-0 z-50"> <nav class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="flex items-center gap-2 group"> <img src="/svg/logo.svg" alt="" class="h-12 w-12 transition-transform duration-300 hover:rotate-12 hover:-translate-y-2"> <span class="font-mono font-semibold text-heading">tost.dev</span> </a> <!-- Desktop nav --> <div class="hidden sm:flex items-center gap-6"> <a href="/" class="text-sm text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="text-sm text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="text-sm text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="text-sm text-muted hover:text-cyan transition-colors"> Snippets </a> </div> <!-- Mobile toggle --> <button id="mobile-menu-btn" class="sm:hidden p-2 text-muted hover:text-cyan" aria-expanded="false" aria-controls="mobile-menu" aria-label="Toggle menu"> <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </nav> <!-- Mobile menu --> <div id="mobile-menu" class="hidden sm:hidden border-t border-border/50 px-4 pb-4"> <a href="/" class="block py-2 text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="block py-2 text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="block py-2 text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="block py-2 text-muted hover:text-cyan transition-colors"> Snippets </a> </div> </header> <script type="module">const e=document.getElementById("mobile-menu-btn"),n=document.getElementById("mobile-menu");e?.addEventListener("click",()=>{const t=n?.classList.toggle("hidden")===!1;e.setAttribute("aria-expanded",String(t))});</script> <main class="flex-1 max-w-5xl mx-auto px-4 py-8 sm:py-12 w-full"> <article> <header class="mb-10"> <div class="flex flex-wrap gap-2 mb-4"> <a href="/tags/kubernetes" class="text-xs font-mono px-2 py-0.5 rounded bg-purple/10 text-purple border border-purple/20 hover:bg-purple/20 transition-colors"> kubernetes </a> </div> <h1 class="text-2xl sm:text-3xl font-bold text-heading mb-3">🚀 KEDA + Knative</h1> <div class="flex gap-4 text-sm text-muted font-mono"> <time datetime="2022-05-08T00:00:00.000Z">May 8, 2022</time> <span>6 min read</span> </div> </header> <div class="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8"> <div class="prose prose-invert prose-cyan
+          prose-headings:text-heading prose-headings:font-semibold
+          prose-a:text-cyan prose-a:no-underline hover:prose-a:underline
+          prose-code:text-magenta prose-code:bg-surface prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-surface prose-pre:border prose-pre:border-border/50 prose-pre:rounded-xl prose-pre:overflow-x-auto
+          [&_pre_code]:text-inherit [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-sm
+          prose-img:rounded-xl prose-img:border prose-img:border-border/50
+          prose-strong:text-heading
+          break-words">  <h2 id="the-scaling-problem-nobody-talks-about">The Scaling Problem Nobody Talks About</h2>
+<p>You’ve containerized your application. You’ve deployed it to Kubernetes. You’ve set up horizontal pod autoscaling (HPA) based on CPU and memory. Everything feels good.</p>
+<p>Then reality hits: <strong>your app doesn’t scale on CPU metrics alone.</strong></p>
+<p>Maybe you have a queue-based workload or you’re running scheduled batch jobs. Maybe you need to scale based on HTTP request latency, database connections, or custom business metrics. Standard Kubernetes HPA? It doesn’t handle any of this well.</p>
+<p>Then you discover <strong>KEDA</strong> and <strong>Knative</strong>.</p>
+<p>But before you redesign your autoscaling strategy, let’s talk about what they actually are, how they work together, and whether they’re the right fit for your workloads.</p>
+<hr>
+<h2 id="what-are-keda-and-knative">What Are KEDA and Knative?</h2>
+<h3 id="keda-kubernetes-event-driven-autoscaling">KEDA: Kubernetes Event-Driven Autoscaling</h3>
+<p><strong>KEDA scales workloads based on event sources and custom metrics</strong> — not just CPU and memory. It can scale based on:</p>
+<ul>
+<li>▶️ Message queue depth (RabbitMQ, SQS, Azure Service Bus)</li>
+<li>▶️ Kafka consumer lag</li>
+<li>▶️ Database query results</li>
+<li>▶️ Cron schedules</li>
+<li>▶️ Custom metrics from any source</li>
+</ul>
+<p>KEDA acts as a bridge between your event sources and Kubernetes’ native HPA, letting you define scalers declaratively.</p>
+<h3 id="knative-serverless-on-kubernetes">Knative: Serverless on Kubernetes</h3>
+<p><strong>Knative is a Kubernetes-native platform for building serverless applications.</strong> It provides:</p>
+<ul>
+<li>▶️ <strong>Knative Serving:</strong> Automatic scaling, traffic management, and revision control for HTTP services</li>
+<li>▶️ <strong>Knative Eventing:</strong> Event-driven architecture with brokers, triggers, and event sources</li>
+<li>▶️ <strong>Knative Functions:</strong> Deploy functions without managing containers</li>
+</ul>
+<img src="https://knative.dev/docs/serving/images/request-flow.png" alt="Knative serving flow">
+<h3 id="how-they-complement-each-other">How They Complement Each Other</h3>
+<p><strong>KEDA</strong> solves the “what triggers scaling” problem.
+<strong>Knative</strong> solves the “how do I deploy and manage serverless workloads” problem.</p>
+<p>Together: Knative handles your service lifecycle (traffic, revisions, cold starts), while KEDA watches your event sources and drives the scaling decisions. We’ll get into the details below.</p>
+<hr>
+<h2 id="keda-deep-dive">KEDA: Deep Dive</h2>
+<h3 id="how-keda-works">How KEDA Works</h3>
+<p>KEDA operates in three layers:</p>
+<ol>
+<li>▶️ <strong>Scalers:</strong> Connectors to event sources (RabbitMQ, Kafka, AWS SQS, etc.)</li>
+<li>▶️ <strong>Metrics:</strong> KEDA queries scalers and converts event data into scaling metrics</li>
+<li>▶️ <strong>HPA Integration:</strong> KEDA creates/updates Kubernetes HPA objects based on scaler metrics</li>
+</ol>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#F7768E">apiVersion</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> keda.sh/v1alpha1</span></span>
+<span class="line"><span style="color:#F7768E">kind</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> ScaledObject</span></span>
+<span class="line"><span style="color:#F7768E">metadata</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> rabbitmq-scaler</span></span>
+<span class="line"><span style="color:#F7768E">spec</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  scaleTargetRef</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">    name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> worker-deployment</span></span>
+<span class="line"><span style="color:#F7768E">  minReplicaCount</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 1</span></span>
+<span class="line"><span style="color:#F7768E">  maxReplicaCount</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 100</span></span>
+<span class="line"><span style="color:#F7768E">  triggers</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#F7768E"> type</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> rabbitmq</span></span>
+<span class="line"><span style="color:#F7768E">      metadata</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">        host</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> amqp://rabbitmq:5672</span></span>
+<span class="line"><span style="color:#F7768E">        queueName</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> tasks</span></span>
+<span class="line"><span style="color:#F7768E">        mode</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> QueueLength</span></span>
+<span class="line"><span style="color:#F7768E">        value</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">30</span><span style="color:#89DDFF">'</span><span style="color:#51597D;font-style:italic"> # scale up when queue has 30+ messages</span></span></code></pre>
+<p>When you apply this, KEDA watches the <code>tasks</code> queue, polls every 30 seconds, and scales <code>worker-deployment</code> from 1 to 100 replicas — targeting 30 messages per replica.</p>
+<h3 id="keda-pros">KEDA: Pros</h3>
+<p>KEDA can scale on virtually any metric — queue depth, DB queries, HTTP endpoints, custom webhooks and so on. It integrates natively with Kubernetes by using standard HPA under the hood, so there are no proprietary APIs to
+worry about. With 50+ scalers covering most use cases and a straightforward custom scaler API, you can accomplish every event-scaling need.</p>
+<hr>
+<h2 id="knative-deep-dive">Knative: Deep Dive</h2>
+<h3 id="how-knative-serving-works">How Knative Serving Works</h3>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#F7768E">apiVersion</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> serving.knative.dev/v1</span></span>
+<span class="line"><span style="color:#F7768E">kind</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> Service</span></span>
+<span class="line"><span style="color:#F7768E">metadata</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> hello-world</span></span>
+<span class="line"><span style="color:#F7768E">spec</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  template</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">    spec</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">      containers</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">        -</span><span style="color:#F7768E"> image</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> gcr.io/knative-samples/hello</span></span>
+<span class="line"><span style="color:#F7768E">          env</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">            -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> TARGET</span></span>
+<span class="line"><span style="color:#F7768E">              value</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">World</span><span style="color:#89DDFF">'</span></span></code></pre>
+<p>Apply this and Knative creates a Deployment, manages traffic routing, handles scale-to-zero, and gives you revision-based rollbacks. New deployment? Just update the image — Knative creates a new revision and you can split traffic between them.</p>
+<h3 id="knative-eventing">Knative Eventing</h3>
+<p>Knative Eventing lets you build event-driven architectures with brokers and triggers:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#F7768E">apiVersion</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> eventing.knative.dev/v1</span></span>
+<span class="line"><span style="color:#F7768E">kind</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> Trigger</span></span>
+<span class="line"><span style="color:#F7768E">metadata</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> my-trigger</span></span>
+<span class="line"><span style="color:#F7768E">spec</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  broker</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> default</span></span>
+<span class="line"><span style="color:#F7768E">  filter</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">    attributes</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">      type</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> com.example.sampletype1</span></span>
+<span class="line"><span style="color:#F7768E">  subscriber</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">    ref</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">      apiVersion</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> serving.knative.dev/v1</span></span>
+<span class="line"><span style="color:#F7768E">      kind</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> Service</span></span>
+<span class="line"><span style="color:#F7768E">      name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> event-handler</span></span></code></pre>
+<img src="https://user-images.githubusercontent.com/16281246/116248768-1fe56080-a73a-11eb-9a85-8bdccb82d16c.png" alt="Knative eventing">
+<h3 id="knative-pros-and-cons">Knative: Pros and Cons</h3>
+<p>Knative gives you a genuinely good serverless developer experience — deploy your code and let it handle scaling, traffic management, and revisions. It scales to zero automatically and transparently, with no manual
+HPA configuration needed. Traffic splitting for canary releases and A/B testing is built in. Rollbacks are trivial: just switch traffic back to a previous revision. And since it runs on any Kubernetes cluster,
+you’re not locked into a specific cloud provider.</p>
+<p>The trade-offs are real, though. Knative introduces a set of new concepts — Services, Revisions, Brokers, Triggers — that take time to internalize. Scale-to-zero sounds great until you hit cold starts of 5–30
+seconds depending on your image size and startup time. And running it in production requires a solid understanding of Kubernetes networking and ingress, which adds meaningful operational complexity.</p>
+<hr>
+<h2 id="keda-vs-knative-when-to-use-what">KEDA vs. Knative: When to Use What</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><strong>Aspect</strong></th><th><strong>KEDA</strong></th><th><strong>Knative</strong></th></tr></thead><tbody><tr><td>Purpose</td><td>Event-driven autoscaling</td><td>Serverless application platform</td></tr><tr><td>Scope</td><td>Scaling decisions only</td><td>Deployment, traffic, events</td></tr><tr><td>Learning curve</td><td>Moderate</td><td>Steep</td></tr><tr><td>Cold starts</td><td>N/A</td><td>5–30s</td></tr><tr><td>Event sources</td><td>50+ scalers</td><td>Kafka, HTTP, custom</td></tr><tr><td>Traffic management</td><td>None</td><td>Excellent</td></tr><tr><td>Revision control</td><td>None</td><td>Built-in</td></tr><tr><td>Best for</td><td>Queue/metric-driven workloads</td><td>Serverless HTTP services</td></tr></tbody></table>
+<p><strong>Use KEDA alone</strong> when you have traditional Deployments that need event-driven scaling and you want full control over your Kubernetes resources. Classic example: a worker pool consuming SQS messages.</p>
+<p><strong>Use Knative alone</strong> when you want a serverless experience — scale to zero, traffic splitting, easy rollbacks — and your trigger is HTTP traffic.</p>
+<p><strong>Use both</strong> when you want Knative’s developer experience but need to scale based on something other than HTTP traffic (Kafka lag, queue depth, custom metrics).</p>
+<hr>
+<h2 id="real-world-scenario-processing-a-kafka-stream">Real-World Scenario: Processing a Kafka Stream</h2>
+<p>You have a Kafka topic with user events. Requirements:</p>
+<ul>
+<li>▶️ Scale up when consumer lag grows</li>
+<li>▶️ Scale down to zero when idle</li>
+<li>▶️ Deploy new versions without downtime</li>
+</ul>
+<p>Here’s the full setup:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#51597D;font-style:italic"># 1. Knative service — handles deployment, traffic, revisions</span></span>
+<span class="line"><span style="color:#F7768E">apiVersion</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> serving.knative.dev/v1</span></span>
+<span class="line"><span style="color:#F7768E">kind</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> Service</span></span>
+<span class="line"><span style="color:#F7768E">metadata</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> event-processor</span></span>
+<span class="line"><span style="color:#F7768E">spec</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  template</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">    metadata</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">      annotations</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">        autoscaling.knative.dev/minScale</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">0</span><span style="color:#89DDFF">'</span></span>
+<span class="line"><span style="color:#F7768E">        autoscaling.knative.dev/maxScale</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">100</span><span style="color:#89DDFF">'</span></span>
+<span class="line"><span style="color:#F7768E">    spec</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">      containers</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">        -</span><span style="color:#F7768E"> image</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> gcr.io/my-project/event-processor:v1</span></span>
+<span class="line"><span style="color:#F7768E">          env</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">            -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> KAFKA_BROKERS</span></span>
+<span class="line"><span style="color:#F7768E">              value</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">kafka-broker:9092</span><span style="color:#89DDFF">'</span></span>
+<span class="line"><span style="color:#9ABDF5">            -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> KAFKA_TOPIC</span></span>
+<span class="line"><span style="color:#F7768E">              value</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">user-events</span><span style="color:#89DDFF">'</span></span>
+<span class="line"><span style="color:#9ABDF5">            -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> KAFKA_GROUP</span></span>
+<span class="line"><span style="color:#F7768E">              value</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">event-processor-group</span><span style="color:#89DDFF">'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#A9B1D6">---</span></span>
+<span class="line"><span style="color:#51597D;font-style:italic"># 2. KEDA ScaledObject — drives scaling based on Kafka lag</span></span>
+<span class="line"><span style="color:#F7768E">apiVersion</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> keda.sh/v1alpha1</span></span>
+<span class="line"><span style="color:#F7768E">kind</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> ScaledObject</span></span>
+<span class="line"><span style="color:#F7768E">metadata</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> event-processor-scaler</span></span>
+<span class="line"><span style="color:#F7768E">spec</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">  scaleTargetRef</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">    name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> event-processor</span></span>
+<span class="line"><span style="color:#F7768E">  minReplicaCount</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 0</span></span>
+<span class="line"><span style="color:#F7768E">  maxReplicaCount</span><span style="color:#89DDFF">:</span><span style="color:#FF9E64"> 100</span></span>
+<span class="line"><span style="color:#F7768E">  triggers</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">    -</span><span style="color:#F7768E"> type</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> kafka</span></span>
+<span class="line"><span style="color:#F7768E">      metadata</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">        bootstrapServers</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> kafka-broker:9092</span></span>
+<span class="line"><span style="color:#F7768E">        consumerGroup</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> event-processor-group</span></span>
+<span class="line"><span style="color:#F7768E">        topic</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> user-events</span></span>
+<span class="line"><span style="color:#F7768E">        lagThreshold</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">50</span><span style="color:#89DDFF">'</span></span></code></pre>
+<p>What you get:</p>
+<ul>
+<li>✅ Scales to zero when there are no events (Knative)</li>
+<li>✅ Scales up based on Kafka lag, not just HTTP traffic (KEDA)</li>
+<li>✅ Traffic splitting for zero-downtime deploys (Knative)</li>
+</ul>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>I used KEDA and Knative together in a project with a micro-UI architecture and 70+ microservices. We needed a messaging system (RabbitMQ in our case) to support transactions spanning multiple services via the saga
+pattern. The learning curve was steep, as I mentioned, but the result is pretty amazing.</p>
+<p>Watching an entire product scale down to zero — well, the few pods for login and the main UI stayed online — and then seeing the relevant UI and business logic microservice pods spin up the moment a user logs into
+their organization tenant, all driven by events… that’s just awesome. Rolling out microservice updates via traffic splitting was equally impressive.</p>
+<p>And you literally get perfect distributed tracing for free, visualized through Jaeger — but that’s a story for another blogpost 👋</p>
+<hr>
+<h2 id="further-reading">Further Reading</h2>
+<ul>
+<li><a href="https://keda.sh/docs/">KEDA documentation</a></li>
+<li><a href="https://knative.dev/docs/">Knative documentation</a></li>
+<li><a href="https://keda.sh/docs/scalers/">KEDA scalers list</a></li>
+<li><a href="https://github.com/knative/serving">Knative on GitHub</a></li>
+</ul>  </div> <aside class="hidden lg:block"> <div class="sticky top-20"> <nav class="glass-panel p-4 text-sm" aria-label="Table of contents"><h2 class="font-semibold text-heading mb-3">Contents</h2><ul class="space-y-1.5"><li class><a href="#the-scaling-problem-nobody-talks-about" class="text-muted hover:text-cyan transition-colors">The Scaling Problem Nobody Talks About</a></li><li class><a href="#what-are-keda-and-knative" class="text-muted hover:text-cyan transition-colors">What Are KEDA and Knative?</a></li><li class="ml-4"><a href="#keda-kubernetes-event-driven-autoscaling" class="text-muted hover:text-cyan transition-colors">KEDA: Kubernetes Event-Driven Autoscaling</a></li><li class="ml-4"><a href="#knative-serverless-on-kubernetes" class="text-muted hover:text-cyan transition-colors">Knative: Serverless on Kubernetes</a></li><li class="ml-4"><a href="#how-they-complement-each-other" class="text-muted hover:text-cyan transition-colors">How They Complement Each Other</a></li><li class><a href="#keda-deep-dive" class="text-muted hover:text-cyan transition-colors">KEDA: Deep Dive</a></li><li class="ml-4"><a href="#how-keda-works" class="text-muted hover:text-cyan transition-colors">How KEDA Works</a></li><li class="ml-4"><a href="#keda-pros" class="text-muted hover:text-cyan transition-colors">KEDA: Pros</a></li><li class><a href="#knative-deep-dive" class="text-muted hover:text-cyan transition-colors">Knative: Deep Dive</a></li><li class="ml-4"><a href="#how-knative-serving-works" class="text-muted hover:text-cyan transition-colors">How Knative Serving Works</a></li><li class="ml-4"><a href="#knative-eventing" class="text-muted hover:text-cyan transition-colors">Knative Eventing</a></li><li class="ml-4"><a href="#knative-pros-and-cons" class="text-muted hover:text-cyan transition-colors">Knative: Pros and Cons</a></li><li class><a href="#keda-vs-knative-when-to-use-what" class="text-muted hover:text-cyan transition-colors">KEDA vs. Knative: When to Use What</a></li><li class><a href="#real-world-scenario-processing-a-kafka-stream" class="text-muted hover:text-cyan transition-colors">Real-World Scenario: Processing a Kafka Stream</a></li><li class><a href="#conclusion" class="text-muted hover:text-cyan transition-colors">Conclusion</a></li><li class><a href="#further-reading" class="text-muted hover:text-cyan transition-colors">Further Reading</a></li></ul></nav> </div> </aside> </div> <section class="mt-12 w-full" aria-label="Comments" data-astro-cid-an2nl7ar> <div class="giscus-wrapper" data-astro-cid-an2nl7ar> <script src="https://giscus.app/client.js" data-repo="t0st/t0st.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkzMzgxMzk5ODQ=" data-category="Comments" data-category-id="MDE4OkRpc2N1c3Npb25DYXRlZ29yeTMyNTczOTU0" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="https://tost.dev/giscus.css" data-lang="en" crossorigin="anonymous" async></script> </div> </section> </article> </main> <footer class="border-t border-border/50 mt-auto py-8"> <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted"> <span>&copy; 2026 tost.dev</span> <div class="flex gap-4"> <a href="https://github.com/t0st" target="_blank" rel="noopener noreferrer" class="hover:text-cyan transition-colors" aria-label="GitHub"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a> <a href="/rss.xml" class="hover:text-cyan transition-colors" aria-label="RSS Feed"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M6.18 15.64a2.18 2.18 0 010 4.36 2.18 2.18 0 010-4.36M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z"></path> </svg> </a> </div> </div> </footer>  </body></html>

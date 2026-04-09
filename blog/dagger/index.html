@@ -1,0 +1,138 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" type="image/svg+xml" href="/svg/logo.svg"><link rel="canonical" href="https://tost.dev/blog/dagger/"><title>🗡️ Beyond GitOps Pipelines | tost.dev</title><meta name="description" content="Why Dagger Might Be Your Next Move"><meta name="generator" content="Astro v6.1.3"><!-- OpenGraph --><meta property="og:type" content="website"><meta property="og:url" content="https://tost.dev/blog/dagger/"><meta property="og:title" content="🗡️ Beyond GitOps Pipelines | tost.dev"><meta property="og:description" content="Why Dagger Might Be Your Next Move"><meta property="og:image" content="https://tost.dev/svg/logo.svg"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="🗡️ Beyond GitOps Pipelines | tost.dev"><meta name="twitter:description" content="Why Dagger Might Be Your Next Move"><meta name="twitter:image" content="https://tost.dev/svg/logo.svg"><!-- CSP --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://giscus.app; img-src 'self' data: https:; connect-src 'self'"><style>.giscus-wrapper[data-astro-cid-an2nl7ar]{width:100%}.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus,.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus iframe{width:100%!important}
+</style>
+<link rel="stylesheet" href="/_astro/global.DOHSpaZS.css"></head> <body class="min-h-screen flex flex-col">  <header class="border-b border-border/50 backdrop-blur-md bg-base/80 sticky top-0 z-50"> <nav class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="flex items-center gap-2 group"> <img src="/svg/logo.svg" alt="" class="h-12 w-12 transition-transform duration-300 hover:rotate-12 hover:-translate-y-2"> <span class="font-mono font-semibold text-heading">tost.dev</span> </a> <!-- Desktop nav --> <div class="hidden sm:flex items-center gap-6"> <a href="/" class="text-sm text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="text-sm text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="text-sm text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="text-sm text-muted hover:text-cyan transition-colors"> Snippets </a> </div> <!-- Mobile toggle --> <button id="mobile-menu-btn" class="sm:hidden p-2 text-muted hover:text-cyan" aria-expanded="false" aria-controls="mobile-menu" aria-label="Toggle menu"> <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </nav> <!-- Mobile menu --> <div id="mobile-menu" class="hidden sm:hidden border-t border-border/50 px-4 pb-4"> <a href="/" class="block py-2 text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="block py-2 text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="block py-2 text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="block py-2 text-muted hover:text-cyan transition-colors"> Snippets </a> </div> </header> <script type="module">const e=document.getElementById("mobile-menu-btn"),n=document.getElementById("mobile-menu");e?.addEventListener("click",()=>{const t=n?.classList.toggle("hidden")===!1;e.setAttribute("aria-expanded",String(t))});</script> <main class="flex-1 max-w-5xl mx-auto px-4 py-8 sm:py-12 w-full"> <article> <header class="mb-10"> <div class="flex flex-wrap gap-2 mb-4"> <a href="/tags/cicd" class="text-xs font-mono px-2 py-0.5 rounded bg-purple/10 text-purple border border-purple/20 hover:bg-purple/20 transition-colors"> cicd </a> </div> <h1 class="text-2xl sm:text-3xl font-bold text-heading mb-3">🗡️ Beyond GitOps Pipelines</h1> <div class="flex gap-4 text-sm text-muted font-mono"> <time datetime="2023-06-28T00:00:00.000Z">June 28, 2023</time> <span>4 min read</span> </div> </header> <div class="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8"> <div class="prose prose-invert prose-cyan
+          prose-headings:text-heading prose-headings:font-semibold
+          prose-a:text-cyan prose-a:no-underline hover:prose-a:underline
+          prose-code:text-magenta prose-code:bg-surface prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-surface prose-pre:border prose-pre:border-border/50 prose-pre:rounded-xl prose-pre:overflow-x-auto
+          [&_pre_code]:text-inherit [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-sm
+          prose-img:rounded-xl prose-img:border prose-img:border-border/50
+          prose-strong:text-heading
+          break-words">  <h2 id="a-problem-without-a-single-solution">A Problem Without a Single Solution</h2>
+<p>Imagine you’re managing CI/CD pipelines across multiple projects. Some use GitHub Actions, others rely on GitLab CI, and your infrastructure team swears by their custom Kubernetes-based workflows (shoutout to the Tekton guys out there!). You’re constantly rewriting the same deployment logic in different YAML dialects, debugging platform-specific quirks, and wondering: <em>why isn’t there a universal way to define pipelines?</em></p>
+<p>Then you discover <strong>Dagger</strong>.</p>
+<p>But before you jump ship from your current CI/CD solution, let’s talk about what Dagger actually is, how it compares to GitHub Actions and GitLab CI, and whether it’s the right fit for your team.</p>
+<hr>
+<h2 id="what-is-dagger">What is Dagger?</h2>
+<p><strong>Dagger is a programmable CI/CD engine</strong> that lets you write your pipelines in real programming languages (Go, Python, TypeScript) instead of YAML. It’s platform-agnostic — you can run the exact same pipeline on GitHub Actions, GitLab CI, your local machine, or any other CI/CD system.</p>
+<p>Think of it as infrastructure-as-code for pipelines themselves. Instead of learning YAML syntax for each platform, you write actual code with proper logic, reusability, and testing.</p>
+<p>Here’s what a Dagger pipeline looks like in Go:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="go"><code><span class="line"><span style="color:#BB9AF7">package</span><span style="color:#C0CAF5"> main</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#7DCFFF">import</span><span style="color:#89DDFF"> (</span></span>
+<span class="line"><span style="color:#89DDFF">	"</span><span style="color:#C0CAF5">context</span><span style="color:#89DDFF">"</span></span>
+<span class="line"><span style="color:#89DDFF">	"</span><span style="color:#C0CAF5">fmt</span><span style="color:#89DDFF">"</span></span>
+<span class="line"><span style="color:#89DDFF">	"</span><span style="color:#C0CAF5">dagger.io/dagger</span><span style="color:#89DDFF">"</span></span>
+<span class="line"><span style="color:#89DDFF">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#BB9AF7">func</span><span style="color:#7AA2F7"> build</span><span style="color:#9ABDF5">(</span><span style="color:#E0AF68">ctx</span><span style="color:#C0CAF5"> context</span><span style="color:#89DDFF">.</span><span style="color:#C0CAF5">Context</span><span style="color:#89DDFF">,</span><span style="color:#E0AF68"> src</span><span style="color:#89DDFF"> *</span><span style="color:#C0CAF5">dagger</span><span style="color:#89DDFF">.</span><span style="color:#C0CAF5">Directory</span><span style="color:#9ABDF5">)</span><span style="color:#9ABDF5"> (</span><span style="color:#89DDFF">*</span><span style="color:#C0CAF5">dagger</span><span style="color:#89DDFF">.</span><span style="color:#C0CAF5">Container</span><span style="color:#89DDFF">,</span><span style="color:#BB9AF7"> error</span><span style="color:#9ABDF5">)</span><span style="color:#9ABDF5"> {</span></span>
+<span class="line"><span style="color:#BB9AF7">	return</span><span style="color:#C0CAF5"> dag</span><span style="color:#89DDFF">.</span><span style="color:#7AA2F7">Container</span><span style="color:#9ABDF5">()</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		From</span><span style="color:#9ABDF5">(</span><span style="color:#89DDFF">"</span><span style="color:#9ECE6A">golang:1.20</span><span style="color:#89DDFF">"</span><span style="color:#9ABDF5">)</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		WithDirectory</span><span style="color:#9ABDF5">(</span><span style="color:#89DDFF">"</span><span style="color:#9ECE6A">/src</span><span style="color:#89DDFF">"</span><span style="color:#89DDFF">,</span><span style="color:#C0CAF5"> src</span><span style="color:#9ABDF5">)</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		WithWorkdir</span><span style="color:#9ABDF5">(</span><span style="color:#89DDFF">"</span><span style="color:#9ECE6A">/src</span><span style="color:#89DDFF">"</span><span style="color:#9ABDF5">)</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		WithExec</span><span style="color:#9ABDF5">([]</span><span style="color:#BB9AF7">string</span><span style="color:#9ABDF5">{</span><span style="color:#89DDFF">"</span><span style="color:#9ECE6A">go</span><span style="color:#89DDFF">"</span><span style="color:#89DDFF">,</span><span style="color:#89DDFF"> "</span><span style="color:#9ECE6A">build</span><span style="color:#89DDFF">"</span><span style="color:#89DDFF">,</span><span style="color:#89DDFF"> "</span><span style="color:#9ECE6A">-o</span><span style="color:#89DDFF">"</span><span style="color:#89DDFF">,</span><span style="color:#89DDFF"> "</span><span style="color:#9ECE6A">app</span><span style="color:#89DDFF">"</span><span style="color:#89DDFF">,</span><span style="color:#89DDFF"> "</span><span style="color:#9ECE6A">./cmd</span><span style="color:#89DDFF">"</span><span style="color:#9ABDF5">})</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		Sync</span><span style="color:#9ABDF5">(</span><span style="color:#C0CAF5">ctx</span><span style="color:#9ABDF5">)</span></span>
+<span class="line"><span style="color:#9ABDF5">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#BB9AF7">func</span><span style="color:#7AA2F7"> test</span><span style="color:#9ABDF5">(</span><span style="color:#E0AF68">ctx</span><span style="color:#C0CAF5"> context</span><span style="color:#89DDFF">.</span><span style="color:#C0CAF5">Context</span><span style="color:#89DDFF">,</span><span style="color:#E0AF68"> src</span><span style="color:#89DDFF"> *</span><span style="color:#C0CAF5">dagger</span><span style="color:#89DDFF">.</span><span style="color:#C0CAF5">Directory</span><span style="color:#9ABDF5">)</span><span style="color:#9ABDF5"> (</span><span style="color:#BB9AF7">string</span><span style="color:#89DDFF">,</span><span style="color:#BB9AF7"> error</span><span style="color:#9ABDF5">)</span><span style="color:#9ABDF5"> {</span></span>
+<span class="line"><span style="color:#BB9AF7">	return</span><span style="color:#C0CAF5"> dag</span><span style="color:#89DDFF">.</span><span style="color:#7AA2F7">Container</span><span style="color:#9ABDF5">()</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		From</span><span style="color:#9ABDF5">(</span><span style="color:#89DDFF">"</span><span style="color:#9ECE6A">golang:1.20</span><span style="color:#89DDFF">"</span><span style="color:#9ABDF5">)</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		WithDirectory</span><span style="color:#9ABDF5">(</span><span style="color:#89DDFF">"</span><span style="color:#9ECE6A">/src</span><span style="color:#89DDFF">"</span><span style="color:#89DDFF">,</span><span style="color:#C0CAF5"> src</span><span style="color:#9ABDF5">)</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		WithWorkdir</span><span style="color:#9ABDF5">(</span><span style="color:#89DDFF">"</span><span style="color:#9ECE6A">/src</span><span style="color:#89DDFF">"</span><span style="color:#9ABDF5">)</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		WithExec</span><span style="color:#9ABDF5">([]</span><span style="color:#BB9AF7">string</span><span style="color:#9ABDF5">{</span><span style="color:#89DDFF">"</span><span style="color:#9ECE6A">go</span><span style="color:#89DDFF">"</span><span style="color:#89DDFF">,</span><span style="color:#89DDFF"> "</span><span style="color:#9ECE6A">test</span><span style="color:#89DDFF">"</span><span style="color:#89DDFF">,</span><span style="color:#89DDFF"> "</span><span style="color:#9ECE6A">./...</span><span style="color:#89DDFF">"</span><span style="color:#9ABDF5">})</span><span style="color:#89DDFF">.</span></span>
+<span class="line"><span style="color:#7AA2F7">		Stdout</span><span style="color:#9ABDF5">(</span><span style="color:#C0CAF5">ctx</span><span style="color:#9ABDF5">)</span></span>
+<span class="line"><span style="color:#9ABDF5">}</span></span></code></pre>
+<p>Run it locally with <code>dagger call build --src .</code>, on GitHub with a shell step, or on GitLab with the same command. One source of truth.</p>
+<hr>
+<h2 id="the-three-way-comparison">The Three-Way Comparison</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><strong>Aspect</strong></th><th><strong>Dagger</strong></th><th><strong>GitHub Actions</strong></th><th><strong>GitLab CI</strong></th></tr></thead><tbody><tr><td>Language</td><td>Go, Python, TypeScript</td><td>YAML + JS/Shell</td><td>YAML + Shell</td></tr><tr><td>Platform lock-in</td><td>None</td><td>GitHub-only</td><td>GitLab-only</td></tr><tr><td>Local execution</td><td>Yes, via Docker</td><td>No (not really)</td><td>Limited</td></tr><tr><td>Ecosystem</td><td>Tiny atm</td><td>Massive marketplace</td><td>Solid built-ins</td></tr><tr><td>Learning curve</td><td>Moderate (needs programming)</td><td>Low (YAML)</td><td>Low–moderate</td></tr><tr><td>Maturity (2023)</td><td>0.x, APIs still changing</td><td>Production-ready</td><td>Production-ready</td></tr><tr><td>Debugging</td><td>Run locally, full logs</td><td>Push-and-pray</td><td>Push-and-pray</td></tr><tr><td>K8s integration</td><td>Growing</td><td>Basic</td><td>Deep</td></tr><tr><td>Best for</td><td>Complex multi-platform pipelines</td><td>GitHub-native projects</td><td>GitLab + K8s teams</td></tr></tbody></table>
+<h3 id="github-actions">GitHub Actions</h3>
+<p>Incredibly convenient if you live in the GitHub ecosystem. The marketplace has pre-built actions for nearly everything, and setting up a basic pipeline takes minutes. But you’re locked to GitHub, YAML gets unwieldy for complex logic, and debugging means pushing commits to see what happens.</p>
+<h3 id="gitlab-ci">GitLab CI</h3>
+<p>Arguably the most feature-rich option. Deep Kubernetes integration, powerful caching, built-in container registry, and a cleaner YAML syntax than GitHub Actions. If your infrastructure lives in GitLab and Kubernetes, it’s genuinely excellent. Same lock-in problem though — switching platforms means rewriting everything.</p>
+<h3 id="where-dagger-differs">Where Dagger Differs</h3>
+<p>Dagger’s pitch is simple: write your pipeline once in a real language, run it anywhere. You get type safety, testable pipeline logic, proper conditionals and loops, and — crucially — local execution. No more pushing a commit just to see if your CI config works.</p>
+<hr>
+<h2 id="dagger-pros">Dagger: Pros</h2>
+<p>Dagger can scale on virtually any CI/CD platform because your pipeline is just code running in containers. There’s no vendor lock-in — the same pipeline definition works on GitHub, GitLab, Jenkins, or your laptop. Local execution via Docker means you can iterate on pipeline logic without pushing commits, which is a genuine productivity win. And because you’re writing real code, you get type checking, unit tests for your pipelines, and proper abstractions.</p>
+<hr>
+<h2 id="try-it--at-least-as-a-poc">Try It — At Least as a POC</h2>
+<p>I tested Dagger as a proof of concept, and as a Go developer, it’s genuinely fun to use. Seeing your pipeline execute locally and being able to step through it like regular code is a great experience. If you’re a
+DevOps person who lives in pipelines, you’ll probably love it.</p>
+<p>But here’s the reality: most developers just want CI/CD that works. They don’t want to tinker with it. And from what I’ve seen, people get nervous when you take away the familiar pipeline UI of their GitHub or
+GitLab instance — Dagger feels like another black box to them. On top of that, if you already have well-crafted, working pipelines, rebuilding them from scratch in Dagger is a significant effort with unclear
+payoff.</p>
+<p>That said, I’d encourage everyone to at least give it a try — especially if you’re starting fresh with new pipelines for a new project. That’s where Dagger’s strengths actually shine.</p>
+<hr>
+<h2 id="further-reading">Further Reading</h2>
+<ul>
+<li><a href="https://docs.dagger.io">Dagger documentation</a></li>
+<li><a href="https://github.com/dagger/dagger">Dagger on GitHub</a></li>
+<li><a href="https://docs.github.com/en/actions">GitHub Actions documentation</a></li>
+<li><a href="https://docs.gitlab.com/ee/ci/">GitLab CI documentation</a></li>
+</ul>  </div> <aside class="hidden lg:block"> <div class="sticky top-20"> <nav class="glass-panel p-4 text-sm" aria-label="Table of contents"><h2 class="font-semibold text-heading mb-3">Contents</h2><ul class="space-y-1.5"><li class><a href="#a-problem-without-a-single-solution" class="text-muted hover:text-cyan transition-colors">A Problem Without a Single Solution</a></li><li class><a href="#what-is-dagger" class="text-muted hover:text-cyan transition-colors">What is Dagger?</a></li><li class><a href="#the-three-way-comparison" class="text-muted hover:text-cyan transition-colors">The Three-Way Comparison</a></li><li class="ml-4"><a href="#github-actions" class="text-muted hover:text-cyan transition-colors">GitHub Actions</a></li><li class="ml-4"><a href="#gitlab-ci" class="text-muted hover:text-cyan transition-colors">GitLab CI</a></li><li class="ml-4"><a href="#where-dagger-differs" class="text-muted hover:text-cyan transition-colors">Where Dagger Differs</a></li><li class><a href="#dagger-pros" class="text-muted hover:text-cyan transition-colors">Dagger: Pros</a></li><li class><a href="#try-it--at-least-as-a-poc" class="text-muted hover:text-cyan transition-colors">Try It — At Least as a POC</a></li><li class><a href="#further-reading" class="text-muted hover:text-cyan transition-colors">Further Reading</a></li></ul></nav> </div> </aside> </div> <section class="mt-12 w-full" aria-label="Comments" data-astro-cid-an2nl7ar> <div class="giscus-wrapper" data-astro-cid-an2nl7ar> <script src="https://giscus.app/client.js" data-repo="t0st/t0st.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkzMzgxMzk5ODQ=" data-category="Comments" data-category-id="MDE4OkRpc2N1c3Npb25DYXRlZ29yeTMyNTczOTU0" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="https://tost.dev/giscus.css" data-lang="en" crossorigin="anonymous" async></script> </div> </section> </article> </main> <footer class="border-t border-border/50 mt-auto py-8"> <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted"> <span>&copy; 2026 tost.dev</span> <div class="flex gap-4"> <a href="https://github.com/t0st" target="_blank" rel="noopener noreferrer" class="hover:text-cyan transition-colors" aria-label="GitHub"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a> <a href="/rss.xml" class="hover:text-cyan transition-colors" aria-label="RSS Feed"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M6.18 15.64a2.18 2.18 0 010 4.36 2.18 2.18 0 010-4.36M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z"></path> </svg> </a> </div> </div> </footer>  </body></html>

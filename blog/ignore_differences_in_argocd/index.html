@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" type="image/svg+xml" href="/svg/logo.svg"><link rel="canonical" href="https://tost.dev/blog/ignore_differences_in_argocd/"><title>🦑 Ignore differences in ArgoCD | tost.dev</title><meta name="description" content="Sometimes you simply want it green instead of yellow"><meta name="generator" content="Astro v6.1.3"><!-- OpenGraph --><meta property="og:type" content="website"><meta property="og:url" content="https://tost.dev/blog/ignore_differences_in_argocd/"><meta property="og:title" content="🦑 Ignore differences in ArgoCD | tost.dev"><meta property="og:description" content="Sometimes you simply want it green instead of yellow"><meta property="og:image" content="https://tost.dev/svg/logo.svg"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="🦑 Ignore differences in ArgoCD | tost.dev"><meta name="twitter:description" content="Sometimes you simply want it green instead of yellow"><meta name="twitter:image" content="https://tost.dev/svg/logo.svg"><!-- CSP --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://giscus.app; img-src 'self' data: https:; connect-src 'self'"><style>.giscus-wrapper[data-astro-cid-an2nl7ar]{width:100%}.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus,.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus iframe{width:100%!important}
+</style>
+<link rel="stylesheet" href="/_astro/global.DOHSpaZS.css"></head> <body class="min-h-screen flex flex-col">  <header class="border-b border-border/50 backdrop-blur-md bg-base/80 sticky top-0 z-50"> <nav class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="flex items-center gap-2 group"> <img src="/svg/logo.svg" alt="" class="h-12 w-12 transition-transform duration-300 hover:rotate-12 hover:-translate-y-2"> <span class="font-mono font-semibold text-heading">tost.dev</span> </a> <!-- Desktop nav --> <div class="hidden sm:flex items-center gap-6"> <a href="/" class="text-sm text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="text-sm text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="text-sm text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="text-sm text-muted hover:text-cyan transition-colors"> Snippets </a> </div> <!-- Mobile toggle --> <button id="mobile-menu-btn" class="sm:hidden p-2 text-muted hover:text-cyan" aria-expanded="false" aria-controls="mobile-menu" aria-label="Toggle menu"> <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </nav> <!-- Mobile menu --> <div id="mobile-menu" class="hidden sm:hidden border-t border-border/50 px-4 pb-4"> <a href="/" class="block py-2 text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="block py-2 text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="block py-2 text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="block py-2 text-muted hover:text-cyan transition-colors"> Snippets </a> </div> </header> <script type="module">const e=document.getElementById("mobile-menu-btn"),n=document.getElementById("mobile-menu");e?.addEventListener("click",()=>{const t=n?.classList.toggle("hidden")===!1;e.setAttribute("aria-expanded",String(t))});</script> <main class="flex-1 max-w-5xl mx-auto px-4 py-8 sm:py-12 w-full"> <article> <header class="mb-10"> <div class="flex flex-wrap gap-2 mb-4"> <a href="/tags/kubernetes" class="text-xs font-mono px-2 py-0.5 rounded bg-purple/10 text-purple border border-purple/20 hover:bg-purple/20 transition-colors"> kubernetes </a> </div> <h1 class="text-2xl sm:text-3xl font-bold text-heading mb-3">🦑 Ignore differences in ArgoCD</h1> <div class="flex gap-4 text-sm text-muted font-mono"> <time datetime="2020-11-22T00:00:00.000Z">November 22, 2020</time> <span>4 min read</span> </div> </header> <div class="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8"> <div class="prose prose-invert prose-cyan
+          prose-headings:text-heading prose-headings:font-semibold
+          prose-a:text-cyan prose-a:no-underline hover:prose-a:underline
+          prose-code:text-magenta prose-code:bg-surface prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-surface prose-pre:border prose-pre:border-border/50 prose-pre:rounded-xl prose-pre:overflow-x-auto
+          [&_pre_code]:text-inherit [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-sm
+          prose-img:rounded-xl prose-img:border prose-img:border-border/50
+          prose-strong:text-heading
+          break-words">  <h2 id="a-difference">A difference</h2>
+<p>Imagine the day you have your full gitops-process up and running and joyfully login to ArgoCD to see all running with green icons and then… there it is, a yellow icon indicating your app has drifted off from your gitops repository.</p>
+<img src="/images/argo_oos.png" alt="ArgoCD out of sync">
+<p>But you didn’t change anything?</p>
+<h2 id="analyze-the-difference">Analyze the difference</h2>
+<p>Luckily it’s pretty easy to analyze the difference in an ArgoCD app. Just click on your application and the detail-view opens.
+In my case this came into my view:</p>
+<img src="/images/argo_diff.png" alt="ArgoCD difference">
+<p>And that explained it pretty quick! Sure I wanted to release a new version of the awesome-app. The code change which got pushed to the git repository triggered a new pipelinerun of the build-app pipeline - so far so good - but the new pipelinerun object <em>build-app-xnhzw</em> doesn’t exist in the gitops repository!</p>
+<h2 id="a-note-on-argocd-differences">A note on ArgoCD differences</h2>
+<p>In general, we can divide out-of-sync differences into two groups:</p>
+<ul>
+<li>
+<p>differences <em>in</em> an object: That’s the case if you have an object defined in a manifest and now some attributes get changed or added without any changes in your gitops repostory</p>
+</li>
+<li>
+<p>whole objects <em>as</em> differences: This is the case if someone adds new objects in your namespace where your app is located and managed by ArgoCD</p>
+</li>
+</ul>
+<p>With ArgoCD you can solve both cases just by changing a few manifests ;-)</p>
+<h3 id="ignore-differences-in-an-object">Ignore differences <em>in</em> an object</h3>
+<p>If you want to ignore certain differences which may occur in a specific object then you can set an annotation in this object as described in the <a href="https://argo-cd.readthedocs.io/en/stable/user-guide/compare-options/#ignoring-resources-that-are-extraneous">argocd-documentation</a>:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>metadata:</span></span>
+<span class="line"><span>  annotations:</span></span>
+<span class="line"><span>    argocd.argoproj.io/compare-options: IgnoreExtraneous</span></span></code></pre>
+<p>It gets more interesting if you want to ignore certain attributes in all objects or in all objects of a certain kind of your app.
+ArgoCD also has a solution for this and this gets explained in their <a href="https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/#application-level-configuration">documentation</a>. The example was a bit weired for me at first but after I tried it out it became clear to me how it can be used, here is an example how to ignore all imagepullsecrets of the serviceaccounts of your app:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>apiVersion: argoproj.io/v1alpha1</span></span>
+<span class="line"><span>kind: Application</span></span>
+<span class="line"><span>metadata:</span></span>
+<span class="line"><span>  name: awesome-app</span></span>
+<span class="line"><span>  namespace: argocd-ns</span></span>
+<span class="line"><span>spec:</span></span>
+<span class="line"><span>  destination:</span></span>
+<span class="line"><span>    namespace: awesome-ns</span></span>
+<span class="line"><span>    server: 'https://kubernetes.default.svc'</span></span>
+<span class="line"><span>  ignoreDifferences:</span></span>
+<span class="line"><span>    - jsonPointers:</span></span>
+<span class="line"><span>        - /imagePullSecrets</span></span>
+<span class="line"><span>        - /secrets</span></span>
+<span class="line"><span>      kind: ServiceAccount</span></span></code></pre>
+<p>If you add a name: attribue right under kind: ServiceAccount you can narrow the ignore down again to a specific sa.</p>
+<h3 id="ignore-objects-as-differences">Ignore objects <em>as</em> differences</h3>
+<p>This was much harder for me to find and at some point I thought this feature is missing at all.. Let’s take a look at the screenshot I showed earlier:</p>
+<img src="/images/argo_diff.png" alt="ArgoCD difference">
+<p>ArgoCD tells me it’s out of sync because of a PipelineRun object. If we click on it we see this detail difference view:</p>
+<img src="/images/argo_diff_detail.png" alt="ArgoCD difference">
+<p>This means, the object is not known by ArgoCD at all!
+If we have autoprune enabled then ArgoCD would try to delete this object immediately which would be pretty bad for us because we want to get our new app built and the deletion cancels this all of a sudden.</p>
+<p>The problem is that our pipeline is defined in our gitops-repository and ArgoCD automatically sets a label to the applied objects:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>  labels:</span></span>
+<span class="line"><span>    app.kubernetes.io/instance: awesome-app</span></span></code></pre>
+<p>If a pipelinerun gets created this run inherits the label</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>    app.kubernetes.io/instance: awesome-app</span></span></code></pre>
+<p>and because of this ArgoCD recognizes the pipelinerun as object which exists but is not present in our repository.</p>
+<p>The ultimate solution of this problem is to ignore the whole object-kind (in my case the Tekton PipelineRun) at instance-level of our ArgoCD instance!
+If you have deployed ArgoCD with the awesome <a href="https://github.com/argoproj-labs/argocd-operator">ArgoCD-Operator</a> then just add <em>resourceExclusions</em> to your manifest of the instance:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>apiVersion: argoproj.io/v1alpha1</span></span>
+<span class="line"><span>kind: ArgoCD</span></span>
+<span class="line"><span>metadata:</span></span>
+<span class="line"><span>  name: example-argocd</span></span>
+<span class="line"><span>  namespace: argocd</span></span>
+<span class="line"><span>spec:</span></span>
+<span class="line"><span>  resourceExclusions: |</span></span>
+<span class="line"><span>    - apiGroups:</span></span>
+<span class="line"><span>      - tekton.dev</span></span>
+<span class="line"><span>      kinds:</span></span>
+<span class="line"><span>      - PipelineRun</span></span>
+<span class="line"><span>      - TaskRun</span></span>
+<span class="line"><span>      clusters:</span></span>
+<span class="line"><span>      - "*"</span></span></code></pre>
+<p>If not then you can add <em>resource.exclusions</em> to your argocd-cm configmap as described in the <a href="https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#resource-exclusioninclusion">argocd-docs</a>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>That’s it 🎉🎊! As you can see there are plenty of options to ignore certain types of differences, and from my point of view if you want to use a gitops-process to deploy apps there will be a situation where you need to ignore some tiny diffs - and it will be there soon!</p>  </div> <aside class="hidden lg:block"> <div class="sticky top-20"> <nav class="glass-panel p-4 text-sm" aria-label="Table of contents"><h2 class="font-semibold text-heading mb-3">Contents</h2><ul class="space-y-1.5"><li class><a href="#a-difference" class="text-muted hover:text-cyan transition-colors">A difference</a></li><li class><a href="#analyze-the-difference" class="text-muted hover:text-cyan transition-colors">Analyze the difference</a></li><li class><a href="#a-note-on-argocd-differences" class="text-muted hover:text-cyan transition-colors">A note on ArgoCD differences</a></li><li class="ml-4"><a href="#ignore-differences-in-an-object" class="text-muted hover:text-cyan transition-colors">Ignore differences in an object</a></li><li class="ml-4"><a href="#ignore-objects-as-differences" class="text-muted hover:text-cyan transition-colors">Ignore objects as differences</a></li><li class><a href="#conclusion" class="text-muted hover:text-cyan transition-colors">Conclusion</a></li></ul></nav> </div> </aside> </div> <section class="mt-12 w-full" aria-label="Comments" data-astro-cid-an2nl7ar> <div class="giscus-wrapper" data-astro-cid-an2nl7ar> <script src="https://giscus.app/client.js" data-repo="t0st/t0st.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkzMzgxMzk5ODQ=" data-category="Comments" data-category-id="MDE4OkRpc2N1c3Npb25DYXRlZ29yeTMyNTczOTU0" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="https://tost.dev/giscus.css" data-lang="en" crossorigin="anonymous" async></script> </div> </section> </article> </main> <footer class="border-t border-border/50 mt-auto py-8"> <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted"> <span>&copy; 2026 tost.dev</span> <div class="flex gap-4"> <a href="https://github.com/t0st" target="_blank" rel="noopener noreferrer" class="hover:text-cyan transition-colors" aria-label="GitHub"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a> <a href="/rss.xml" class="hover:text-cyan transition-colors" aria-label="RSS Feed"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M6.18 15.64a2.18 2.18 0 010 4.36 2.18 2.18 0 010-4.36M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z"></path> </svg> </a> </div> </div> </footer>  </body></html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" type="image/svg+xml" href="/svg/logo.svg"><link rel="canonical" href="https://tost.dev/blog/yunikorn/"><title>🦄 Spark on Kubernetes | tost.dev</title><meta name="description" content="with Apache YuniKorn — And Why It Might Replace AWS Glue"><meta name="generator" content="Astro v6.1.3"><!-- OpenGraph --><meta property="og:type" content="website"><meta property="og:url" content="https://tost.dev/blog/yunikorn/"><meta property="og:title" content="🦄 Spark on Kubernetes | tost.dev"><meta property="og:description" content="with Apache YuniKorn — And Why It Might Replace AWS Glue"><meta property="og:image" content="https://tost.dev/svg/logo.svg"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="🦄 Spark on Kubernetes | tost.dev"><meta name="twitter:description" content="with Apache YuniKorn — And Why It Might Replace AWS Glue"><meta name="twitter:image" content="https://tost.dev/svg/logo.svg"><!-- CSP --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://giscus.app; img-src 'self' data: https:; connect-src 'self'"><style>.giscus-wrapper[data-astro-cid-an2nl7ar]{width:100%}.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus,.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus iframe{width:100%!important}
+</style>
+<link rel="stylesheet" href="/_astro/global.DOHSpaZS.css"></head> <body class="min-h-screen flex flex-col">  <header class="border-b border-border/50 backdrop-blur-md bg-base/80 sticky top-0 z-50"> <nav class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="flex items-center gap-2 group"> <img src="/svg/logo.svg" alt="" class="h-12 w-12 transition-transform duration-300 hover:rotate-12 hover:-translate-y-2"> <span class="font-mono font-semibold text-heading">tost.dev</span> </a> <!-- Desktop nav --> <div class="hidden sm:flex items-center gap-6"> <a href="/" class="text-sm text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="text-sm text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="text-sm text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="text-sm text-muted hover:text-cyan transition-colors"> Snippets </a> </div> <!-- Mobile toggle --> <button id="mobile-menu-btn" class="sm:hidden p-2 text-muted hover:text-cyan" aria-expanded="false" aria-controls="mobile-menu" aria-label="Toggle menu"> <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </nav> <!-- Mobile menu --> <div id="mobile-menu" class="hidden sm:hidden border-t border-border/50 px-4 pb-4"> <a href="/" class="block py-2 text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="block py-2 text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="block py-2 text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="block py-2 text-muted hover:text-cyan transition-colors"> Snippets </a> </div> </header> <script type="module">const e=document.getElementById("mobile-menu-btn"),n=document.getElementById("mobile-menu");e?.addEventListener("click",()=>{const t=n?.classList.toggle("hidden")===!1;e.setAttribute("aria-expanded",String(t))});</script> <main class="flex-1 max-w-5xl mx-auto px-4 py-8 sm:py-12 w-full"> <article> <header class="mb-10"> <div class="flex flex-wrap gap-2 mb-4"> <a href="/tags/kubernetes" class="text-xs font-mono px-2 py-0.5 rounded bg-purple/10 text-purple border border-purple/20 hover:bg-purple/20 transition-colors"> kubernetes </a> </div> <h1 class="text-2xl sm:text-3xl font-bold text-heading mb-3">🦄 Spark on Kubernetes</h1> <div class="flex gap-4 text-sm text-muted font-mono"> <time datetime="2024-01-07T00:00:00.000Z">January 7, 2024</time> <span>7 min read</span> </div> </header> <div class="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8"> <div class="prose prose-invert prose-cyan
+          prose-headings:text-heading prose-headings:font-semibold
+          prose-a:text-cyan prose-a:no-underline hover:prose-a:underline
+          prose-code:text-magenta prose-code:bg-surface prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-surface prose-pre:border prose-pre:border-border/50 prose-pre:rounded-xl prose-pre:overflow-x-auto
+          [&_pre_code]:text-inherit [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-sm
+          prose-img:rounded-xl prose-img:border prose-img:border-border/50
+          prose-strong:text-heading
+          break-words">  <h2 id="the-problem-with-running-spark-on-kubernetes">The Problem with Running Spark on Kubernetes</h2>
+<p>Kubernetes is great at running services. It’s not great at running batch workloads — at least not out of the box.</p>
+<p>The default Kubernetes scheduler was designed for long-running services, not for Spark jobs that need to spin up a driver and 50 executors simultaneously, process data, and disappear. When you try to run Spark on Kubernetes with the default scheduler, you run into a set of familiar problems:</p>
+<ul>
+<li>▶️ <strong>No workload queuing</strong> — if the cluster is full, Kubernetes rejects your job outright. You implement retry logic. It gets messy.</li>
+<li>▶️ <strong>No multi-tenancy</strong> — all workloads share the same resource pool. Team A’s heavy job starves Team B’s pipeline.</li>
+<li>▶️ <strong>No gang scheduling</strong> — Spark needs a driver <em>and</em> executors. The default scheduler allocates pods one by one. You end up with a driver running but no executors, burning resources while waiting.</li>
+<li>▶️ <strong>Inefficient autoscaling</strong> — without gang scheduling, the cluster autoscaler doesn’t know how many nodes a job actually needs upfront. It scales reactively, in batches, with significant delays.</li>
+</ul>
+<p>This is where <strong>Apache YuniKorn</strong> comes in.</p>
+<hr>
+<h2 id="what-is-apache-yunikorn">What is Apache YuniKorn?</h2>
+<p>YuniKorn is a Kubernetes scheduler built specifically for batch and big data workloads. It replaces (or augments) the default Kubernetes scheduler and adds:</p>
+<ul>
+<li><strong>Hierarchical resource queues</strong> — define queues per team, project, or environment with guaranteed and maximum resource limits</li>
+<li><strong>Gang scheduling</strong> — allocate all resources for a job at once, or not at all</li>
+<li><strong>Application-aware scheduling</strong> — YuniKorn understands the concept of an “application” (driver + executors), not just individual pods</li>
+<li><strong>Fair scheduling and preemption</strong> — configurable priorities, preemption policies, and user/group quota enforcement</li>
+<li><strong>Web UI</strong> — visibility into queues, applications, and resource utilization</li>
+</ul>
+<p>It’s used in production by Apple, Alibaba, Visa, Lyft, Zillow, and Cloudera. AWS themselves recommend YuniKorn with gang scheduling for running EMR on EKS.</p>
+<hr>
+<h2 id="gang-scheduling-the-key-feature">Gang Scheduling: The Key Feature</h2>
+<img src="https://yunikorn.apache.org/assets/images/gang_scheduling_intro-7f458cff1f69a386818aedfbc0443a34.png" alt="gang scheduling">
+<p>Gang scheduling is the most important thing YuniKorn brings to Spark on Kubernetes. Here’s why it matters.</p>
+<h3 id="the-resource-segmentation-problem">The Resource Segmentation Problem</h3>
+<p>Without gang scheduling, when multiple Spark jobs compete for limited resources, you get this:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Job 1: [driver ✅] [executor ⏳] [executor ⏳] [executor ⏳]</span></span>
+<span class="line"><span>Job 2: [driver ✅] [executor ⏳] [executor ⏳] [executor ⏳]</span></span>
+<span class="line"><span>Job 3: [driver ✅] [executor ⏳] [executor ⏳] [executor ⏳]</span></span></code></pre>
+<p>Every job has a driver running but no executors. All jobs are stuck. The cluster is deadlocked.</p>
+<p>With gang scheduling:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Job 1: [driver ✅] [executor ✅] [executor ✅] [executor ✅]  ← running</span></span>
+<span class="line"><span>Job 2: [driver ⏳] [executor ⏳] [executor ⏳] [executor ⏳]  ← waiting</span></span>
+<span class="line"><span>Job 3: [driver ⏳] [executor ⏳] [executor ⏳] [executor ⏳]  ← waiting</span></span></code></pre>
+<p>Job 1 gets all its resources and runs. Jobs 2 and 3 wait in the queue. Predictable, no deadlocks.</p>
+<h3 id="how-it-works">How It Works</h3>
+<p>You define <code>TaskGroups</code> in your Spark job spec — one for the driver, one for executors:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#51597D;font-style:italic"># Spark application annotations for YuniKorn gang scheduling</span></span>
+<span class="line"><span style="color:#F7768E">yunikorn.apache.org/task-group-name</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">spark-driver</span><span style="color:#89DDFF">'</span></span>
+<span class="line"><span style="color:#F7768E">yunikorn.apache.org/task-groups</span><span style="color:#89DDFF">:</span><span style="color:#BB9AF7"> |</span></span>
+<span class="line"><span style="color:#9ECE6A">  [{</span></span>
+<span class="line"><span style="color:#9ECE6A">    "name": "spark-driver",</span></span>
+<span class="line"><span style="color:#9ECE6A">    "minMember": 1,</span></span>
+<span class="line"><span style="color:#9ECE6A">    "minResource": {"cpu": "1", "memory": "2Gi"}</span></span>
+<span class="line"><span style="color:#9ECE6A">  }, {</span></span>
+<span class="line"><span style="color:#9ECE6A">    "name": "spark-executor",</span></span>
+<span class="line"><span style="color:#9ECE6A">    "minMember": 10,</span></span>
+<span class="line"><span style="color:#9ECE6A">    "minResource": {"cpu": "2", "memory": "4Gi"}</span></span>
+<span class="line"><span style="color:#9ECE6A">  }]</span></span></code></pre>
+<p>When the job is submitted, YuniKorn:</p>
+<ol>
+<li>Creates lightweight placeholder pods for all task groups (1 driver + 10 executors)</li>
+<li>Waits until all placeholders are scheduled — this triggers the cluster autoscaler in one shot</li>
+<li>Swaps placeholders with real pods once resources are available</li>
+<li>Cleans up any over-reserved placeholders</li>
+</ol>
+<p>The result: the autoscaler sees the full resource demand immediately and scales the cluster to the right size in one event, instead of scaling reactively in multiple waves.</p>
+<h3 id="soft-vs-hard-gang-scheduling">Soft vs Hard Gang Scheduling</h3>
+<p>YuniKorn supports both:</p>
+<ul>
+<li><strong>Hard gang scheduling</strong> — all or nothing. If the full resource set can’t be allocated, the job waits.</li>
+<li><strong>Soft gang scheduling</strong> — tries gang scheduling first, falls back to normal scheduling if it can’t be satisfied. Useful for jobs that can make progress with fewer executors.</li>
+</ul>
+<hr>
+<h2 id="hierarchical-queues">Hierarchical Queues</h2>
+<p>Beyond gang scheduling, YuniKorn’s queue system is what makes multi-tenant Spark clusters actually manageable:</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="yaml"><code><span class="line"><span style="color:#F7768E">queues</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">  -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> root</span></span>
+<span class="line"><span style="color:#F7768E">    queues</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">      -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> data-engineering</span></span>
+<span class="line"><span style="color:#F7768E">        resources</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">          guaranteed</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> {</span><span style="color:#F7768E"> cpu</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">40</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF">,</span><span style="color:#F7768E"> memory</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">200Gi</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF"> }</span></span>
+<span class="line"><span style="color:#F7768E">          max</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> {</span><span style="color:#F7768E"> cpu</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">80</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF">,</span><span style="color:#F7768E"> memory</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">400Gi</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF"> }</span></span>
+<span class="line"><span style="color:#F7768E">        queues</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#9ABDF5">          -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> team-a</span></span>
+<span class="line"><span style="color:#F7768E">            resources</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">              guaranteed</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> {</span><span style="color:#F7768E"> cpu</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">20</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF">,</span><span style="color:#F7768E"> memory</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">100Gi</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF"> }</span></span>
+<span class="line"><span style="color:#9ABDF5">          -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> team-b</span></span>
+<span class="line"><span style="color:#F7768E">            resources</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">              guaranteed</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> {</span><span style="color:#F7768E"> cpu</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">20</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF">,</span><span style="color:#F7768E"> memory</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">100Gi</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF"> }</span></span>
+<span class="line"><span style="color:#9ABDF5">      -</span><span style="color:#F7768E"> name</span><span style="color:#89DDFF">:</span><span style="color:#9ECE6A"> ml-training</span></span>
+<span class="line"><span style="color:#F7768E">        resources</span><span style="color:#89DDFF">:</span></span>
+<span class="line"><span style="color:#F7768E">          guaranteed</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> {</span><span style="color:#F7768E"> cpu</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">20</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF">,</span><span style="color:#F7768E"> memory</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">100Gi</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF"> }</span></span>
+<span class="line"><span style="color:#F7768E">          max</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> {</span><span style="color:#F7768E"> cpu</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">60</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF">,</span><span style="color:#F7768E"> memory</span><span style="color:#89DDFF">:</span><span style="color:#89DDFF"> '</span><span style="color:#9ECE6A">300Gi</span><span style="color:#89DDFF">'</span><span style="color:#89DDFF"> }</span></span></code></pre>
+<p>Each team gets guaranteed resources and can burst up to the queue maximum. No team can starve another. Jobs queue within their allocation instead of being rejected.</p>
+<img src="https://yunikorn.apache.org/assets/images/priority-tree-339966fd5916321cceba7ae8023cdbd9.png" alt="tenants">
+<hr>
+<h2 id="yunikorn-vs-aws-glue">YuniKorn vs AWS Glue</h2>
+<p>So where does AWS Glue fit in?</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><strong>Aspect</strong></th><th><strong>YuniKorn + Spark on K8s</strong></th><th><strong>AWS Glue</strong></th></tr></thead><tbody><tr><td>Setup</td><td>Moderate — deploy YuniKorn, configure queues</td><td>Zero — fully managed</td></tr><tr><td>Ops burden</td><td>You own the cluster</td><td>None</td></tr><tr><td>Scheduling control</td><td>Full — gang scheduling, queues, priorities</td><td>None</td></tr><tr><td>Multi-tenancy</td><td>Built-in via queues</td><td>Limited</td></tr><tr><td>Spark version</td><td>Any</td><td>Glue-managed (Glue 4.0 = Spark 3.3)</td></tr><tr><td>Autoscaling</td><td>Efficient with gang scheduling</td><td>Automatic</td></tr><tr><td>Cost model</td><td>EC2/spot pricing + cluster overhead</td><td>Per DPU-hour (managed premium)</td></tr><tr><td>Vendor lock-in</td><td>None</td><td>AWS-only</td></tr><tr><td>Debugging</td><td>Standard Spark UI + YuniKorn UI</td><td>CloudWatch + limited Spark UI</td></tr><tr><td>Cold start</td><td>Fast (warm cluster)</td><td>Slower (job startup overhead)</td></tr><tr><td>Best for</td><td>High-volume, multi-tenant, cost-sensitive</td><td>Low-ops, occasional ETL, AWS-native teams</td></tr></tbody></table>
+<h3 id="when-glue-makes-sense">When Glue Makes Sense</h3>
+<p>Glue is genuinely good if you’re running occasional ETL jobs and don’t want to manage infrastructure. You pay a premium for the managed service, but you get zero ops overhead, native AWS integrations (S3, Glue Catalog, IAM), and serverless scaling. For teams that run a handful of pipelines and don’t want to think about Kubernetes, it’s hard to beat.</p>
+<h3 id="when-yunikorn--spark-on-k8s-makes-sense">When YuniKorn + Spark on K8s Makes Sense</h3>
+<p>The economics shift when you’re running Spark at scale. Glue’s per-DPU pricing adds up quickly for high-volume workloads. With Spark on EKS and spot instances, you can run the same workloads at significantly lower cost — often 50–70% cheaper for sustained usage — at the expense of managing the cluster.</p>
+<p>Beyond cost, YuniKorn gives you something Glue simply can’t: <strong>control over scheduling</strong>. If you have multiple teams sharing compute, complex job dependencies, or ML training workloads that need gang scheduling, Glue’s “submit and wait” model doesn’t cut it.</p>
+<p>The combination of YuniKorn’s gang scheduling + Kubernetes cluster autoscaler + spot instances is particularly powerful: jobs get their full resource allocation in one autoscaling event, spot interruptions are handled gracefully, and you’re paying EC2 spot prices instead of Glue DPU rates.</p>
+<hr>
+<h2 id="the-verdict">The Verdict</h2>
+<p><strong>AWS Glue is the right choice if you want zero ops and you’re already deep in the AWS ecosystem.</strong> The managed experience is genuinely good for straightforward ETL.</p>
+<p><strong>YuniKorn + Spark on Kubernetes is the right choice if you’re running Spark at scale, need multi-tenancy, or want to optimize costs.</strong> The gang scheduling feature alone solves real problems that the default Kubernetes scheduler can’t — resource deadlocks, inefficient autoscaling, and unpredictable job runtimes. The fact that AWS themselves recommend it for EMR on EKS says a lot.</p>
+<p>If you’re already running Kubernetes and considering Spark workloads, YuniKorn should be your first stop before reaching for Glue.</p>
+<hr>
+<h2 id="further-reading">Further Reading</h2>
+<ul>
+<li><a href="https://yunikorn.apache.org/docs/">Apache YuniKorn documentation</a></li>
+<li><a href="https://yunikorn.apache.org/docs/user_guide/gang_scheduling">YuniKorn Gang Scheduling user guide</a></li>
+<li><a href="https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/tutorial-yunikorn.html">AWS guide: EMR on EKS with YuniKorn</a></li>
+<li><a href="https://www.cloudera.com/blog/technical/spark-on-kubernetes-gang-scheduling-with-yunikorn.html">Spark on Kubernetes – Gang Scheduling with YuniKorn (Cloudera)</a></li>
+<li><a href="https://medium.com/engineering-cloudera/unlocking-the-power-of-spark-on-kubernetes-with-apache-yunikorn-7ffeea46cdd7">Unlocking the Power of Spark on Kubernetes with Apache YuniKorn (Medium)</a></li>
+</ul>  </div> <aside class="hidden lg:block"> <div class="sticky top-20"> <nav class="glass-panel p-4 text-sm" aria-label="Table of contents"><h2 class="font-semibold text-heading mb-3">Contents</h2><ul class="space-y-1.5"><li class><a href="#the-problem-with-running-spark-on-kubernetes" class="text-muted hover:text-cyan transition-colors">The Problem with Running Spark on Kubernetes</a></li><li class><a href="#what-is-apache-yunikorn" class="text-muted hover:text-cyan transition-colors">What is Apache YuniKorn?</a></li><li class><a href="#gang-scheduling-the-key-feature" class="text-muted hover:text-cyan transition-colors">Gang Scheduling: The Key Feature</a></li><li class="ml-4"><a href="#the-resource-segmentation-problem" class="text-muted hover:text-cyan transition-colors">The Resource Segmentation Problem</a></li><li class="ml-4"><a href="#how-it-works" class="text-muted hover:text-cyan transition-colors">How It Works</a></li><li class="ml-4"><a href="#soft-vs-hard-gang-scheduling" class="text-muted hover:text-cyan transition-colors">Soft vs Hard Gang Scheduling</a></li><li class><a href="#hierarchical-queues" class="text-muted hover:text-cyan transition-colors">Hierarchical Queues</a></li><li class><a href="#yunikorn-vs-aws-glue" class="text-muted hover:text-cyan transition-colors">YuniKorn vs AWS Glue</a></li><li class="ml-4"><a href="#when-glue-makes-sense" class="text-muted hover:text-cyan transition-colors">When Glue Makes Sense</a></li><li class="ml-4"><a href="#when-yunikorn--spark-on-k8s-makes-sense" class="text-muted hover:text-cyan transition-colors">When YuniKorn + Spark on K8s Makes Sense</a></li><li class><a href="#the-verdict" class="text-muted hover:text-cyan transition-colors">The Verdict</a></li><li class><a href="#further-reading" class="text-muted hover:text-cyan transition-colors">Further Reading</a></li></ul></nav> </div> </aside> </div> <section class="mt-12 w-full" aria-label="Comments" data-astro-cid-an2nl7ar> <div class="giscus-wrapper" data-astro-cid-an2nl7ar> <script src="https://giscus.app/client.js" data-repo="t0st/t0st.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkzMzgxMzk5ODQ=" data-category="Comments" data-category-id="MDE4OkRpc2N1c3Npb25DYXRlZ29yeTMyNTczOTU0" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="https://tost.dev/giscus.css" data-lang="en" crossorigin="anonymous" async></script> </div> </section> </article> </main> <footer class="border-t border-border/50 mt-auto py-8"> <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted"> <span>&copy; 2026 tost.dev</span> <div class="flex gap-4"> <a href="https://github.com/t0st" target="_blank" rel="noopener noreferrer" class="hover:text-cyan transition-colors" aria-label="GitHub"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a> <a href="/rss.xml" class="hover:text-cyan transition-colors" aria-label="RSS Feed"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M6.18 15.64a2.18 2.18 0 010 4.36 2.18 2.18 0 010-4.36M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z"></path> </svg> </a> </div> </div> </footer>  </body></html>

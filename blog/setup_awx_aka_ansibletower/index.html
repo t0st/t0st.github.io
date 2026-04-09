@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" type="image/svg+xml" href="/svg/logo.svg"><link rel="canonical" href="https://tost.dev/blog/setup_awx_aka_ansibletower/"><title>🗼 Howto setup AWX (a.k.a Ansible Tower) | tost.dev</title><meta name="description" content="A description how to install and configure AWX - the upstream project of Ansible Tower"><meta name="generator" content="Astro v6.1.3"><!-- OpenGraph --><meta property="og:type" content="website"><meta property="og:url" content="https://tost.dev/blog/setup_awx_aka_ansibletower/"><meta property="og:title" content="🗼 Howto setup AWX (a.k.a Ansible Tower) | tost.dev"><meta property="og:description" content="A description how to install and configure AWX - the upstream project of Ansible Tower"><meta property="og:image" content="https://tost.dev/svg/logo.svg"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="🗼 Howto setup AWX (a.k.a Ansible Tower) | tost.dev"><meta name="twitter:description" content="A description how to install and configure AWX - the upstream project of Ansible Tower"><meta name="twitter:image" content="https://tost.dev/svg/logo.svg"><!-- CSP --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://giscus.app; img-src 'self' data: https:; connect-src 'self'"><style>.giscus-wrapper[data-astro-cid-an2nl7ar]{width:100%}.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus,.giscus-wrapper[data-astro-cid-an2nl7ar] .giscus iframe{width:100%!important}
+</style>
+<link rel="stylesheet" href="/_astro/global.DOHSpaZS.css"></head> <body class="min-h-screen flex flex-col">  <header class="border-b border-border/50 backdrop-blur-md bg-base/80 sticky top-0 z-50"> <nav class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="flex items-center gap-2 group"> <img src="/svg/logo.svg" alt="" class="h-12 w-12 transition-transform duration-300 hover:rotate-12 hover:-translate-y-2"> <span class="font-mono font-semibold text-heading">tost.dev</span> </a> <!-- Desktop nav --> <div class="hidden sm:flex items-center gap-6"> <a href="/" class="text-sm text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="text-sm text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="text-sm text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="text-sm text-muted hover:text-cyan transition-colors"> Snippets </a> </div> <!-- Mobile toggle --> <button id="mobile-menu-btn" class="sm:hidden p-2 text-muted hover:text-cyan" aria-expanded="false" aria-controls="mobile-menu" aria-label="Toggle menu"> <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </nav> <!-- Mobile menu --> <div id="mobile-menu" class="hidden sm:hidden border-t border-border/50 px-4 pb-4"> <a href="/" class="block py-2 text-muted hover:text-cyan transition-colors"> Blog </a><a href="/about" class="block py-2 text-muted hover:text-cyan transition-colors"> About </a><a href="/projects" class="block py-2 text-muted hover:text-cyan transition-colors"> Projects </a><a href="/snippets" class="block py-2 text-muted hover:text-cyan transition-colors"> Snippets </a> </div> </header> <script type="module">const e=document.getElementById("mobile-menu-btn"),n=document.getElementById("mobile-menu");e?.addEventListener("click",()=>{const t=n?.classList.toggle("hidden")===!1;e.setAttribute("aria-expanded",String(t))});</script> <main class="flex-1 max-w-5xl mx-auto px-4 py-8 sm:py-12 w-full"> <article> <header class="mb-10"> <div class="flex flex-wrap gap-2 mb-4"> <a href="/tags/ansible" class="text-xs font-mono px-2 py-0.5 rounded bg-purple/10 text-purple border border-purple/20 hover:bg-purple/20 transition-colors"> ansible </a> </div> <h1 class="text-2xl sm:text-3xl font-bold text-heading mb-3">🗼 Howto setup AWX (a.k.a Ansible Tower)</h1> <div class="flex gap-4 text-sm text-muted font-mono"> <time datetime="2020-03-11T00:00:00.000Z">March 11, 2020</time> <span>3 min read</span> </div> </header> <div class="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8"> <div class="prose prose-invert prose-cyan
+          prose-headings:text-heading prose-headings:font-semibold
+          prose-a:text-cyan prose-a:no-underline hover:prose-a:underline
+          prose-code:text-magenta prose-code:bg-surface prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-surface prose-pre:border prose-pre:border-border/50 prose-pre:rounded-xl prose-pre:overflow-x-auto
+          [&_pre_code]:text-inherit [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-sm
+          prose-img:rounded-xl prose-img:border prose-img:border-border/50
+          prose-strong:text-heading
+          break-words">  <p>If we want to execute ansible playbooks centrally and at scheduled dates it is recommended to use a software like AWX for this purpose.</p>
+<p>The following article describes how to install AWX on CentOS8 as containerized application and the initial configuration of a ldap-connect to a ldap/ad server.</p>
+<h2 id="install-awx">Install AWX</h2>
+<p><em>All steps here get executed via ssh on the selected server which runs CentOS8, user must have root privileges.</em></p>
+<h3 id="install-needed-tools">Install needed tools</h3>
+<p>Install epel repo and then install jq
+yum install -y epel-release -y &#x26;&#x26; yum install jq</p>
+<p>Install docker-ce related packages
+yum install -y yum-utils device-mapper-persistent-data lvm2</p>
+<p>Install docker-ce for this we need to remove podman :(((
+dnf config-manager —add-repo=<a href="https://download.docker.com/linux/centos/docker-ce.repo">https://download.docker.com/linux/centos/docker-ce.repo</a>
+Adding repo from: <a href="https://download.docker.com/linux/centos/docker-ce.repo">https://download.docker.com/linux/centos/docker-ce.repo</a>
+dnf list docker-ce
+dnf install docker-ce —nobest -y
+dnf remove podman
+dnf install docker-ce —nobest -y
+systemctl start docker
+systemctl enable docker
+docker —version
+Docker version 19.03.8, build afacb8b
+dnf install curl -y
+dnf install make -y</p>
+<p>Install docker-compose
+LATEST_VERSION=$(curl -s <a href="https://api.github.com/repos/docker/compose/releases/latest">https://api.github.com/repos/docker/compose/releases/latest</a> | jq -r ‘.tag_name’)
+curl -L “<a href="https://github.com/docker/compose/releases/download/$LATEST_VERSION/docker-compose-$(uname">https://github.com/docker/compose/releases/download/$LATEST_VERSION/docker-compose-$(uname</a> -s)-$(uname -m)” > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+docker-compose —version
+docker-compose version 1.25.4, build 8d51620a</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>dnf install python3</span></span>
+<span class="line"><span>dnf install ansible</span></span>
+<span class="line"><span>dnf install python3-pip</span></span>
+<span class="line"><span>python3 -m pip install docker-compose</span></span>
+<span class="line"><span>cp /bin/user</span></span></code></pre>
+<h3 id="configure-stuff">Configure stuff</h3>
+<p>Configure Firewall
+firewall-cmd —get-zone-of-interface=docker0
+sudo firewall-cmd —zone=work —change-interface=docker0</p>
+<pre class="astro-code tokyo-night" style="background-color:#1a1b26;color:#a9b1d6; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>firewall-cmd --zone=public --add-masquerade --permanent</span></span>
+<span class="line"><span>firewall-cmd --reload</span></span>
+<span class="line"><span>systemctl status firewalld.service</span></span>
+<span class="line"><span>systemctl restart docker</span></span></code></pre>
+<p>Change dir to the home directory.
+cd ~</p>
+<p>Get the latest release of ansible awx tarball and extract it.
+LATEST_AWX=$(curl -s <a href="https://api.github.com/repos/ansible/awx/tags">https://api.github.com/repos/ansible/awx/tags</a> |egrep name |head -1 |awk ‘{print $2}’ |tr -d ’”|,’)
+curl -L -o ansible-awx-$LATEST_AWX.tar.gz <a href="https://github.com/ansible/awx/archive/$LATEST_AWX.tar.gz">https://github.com/ansible/awx/archive/$LATEST_AWX.tar.gz</a> &#x26;&#x26; <br>
+tar xvfz ansible-awx-$LATEST_AWX.tar.gz &#x26;&#x26; <br>
+rm -f ansible-awx-$LATEST_AWX.tar.gz</p>
+<p>Enter awx folder.
+cd awx-$LATEST_AWX</p>
+<p>Create a folder in /opt/ to hold awx psql data
+mkdir -p /opt/awx-psql-data</p>
+<p>Disable dockerhub reference in order to build local images.
+sed -i “s|^dockerhub_base=ansible|#dockerhub_base=ansible|g” installer/inventory</p>
+<p>Provide psql data path to installer.
+sed -i “s|^postgres_data_dir.*|postgres_data_dir=/opt/awx-psql-data|g” installer/inventory</p>
+<p>Create awx-ssl folder in /etc.
+mkdir -p /etc/awx-ssl/</p>
+<p>Make a self-signed ssl certificate
+openssl req -subj ‘/CN=<cn>/O=<o>/L=<l>/ST=<st>/C=<c>’ <br>
+-new -newkey rsa:2048 <br>
+-sha256 -days 1365 <br>
+-nodes -x509 <br>
+-keyout /etc/awx-ssl/awx.key <br>
+-out /etc/awx-ssl//awx.crt</c></st></l></o></cn></p>
+<p>Merge awx.key and awx.crt files
+cat /etc/awx-ssl/awx.key /etc/awx-ssl/awx.crt > /etc/awx-ssl/awx-bundled-key.crt</p>
+<p>Pass the full path of awx-bundled-key.crt file to ssl_certificate variable in inventory.
+sed -i -E “s|^#([[:space:]]?)ssl_certificate=|ssl_certificate=/etc/awx-ssl/awx-bundled-key.crt|g” installer/inventory</p>
+<p>Change dir to where awx main folder is placed:
+cd ~</p>
+<p>Download and extract awx-logos repository.
+(We could use git to clone the repo; but it requires git to be installed on the host.)
+curl -L -o awx-logos.tar.gz <a href="https://github.com/ansible/awx-logos/archive/master.tar.gz">https://github.com/ansible/awx-logos/archive/master.tar.gz</a>
+tar xvfz awx-logos.tar.gz</p>
+<p><em>UPDATE 21.01.2021: The logos have gotten replaces with.. blanks?</em>
+If you want to get the old version then download <a href="https://github.com/ansible/awx-logos/archive/7064a4635a3f857c67a5f5a8608ca52c27cdf26c.zip">https://github.com/ansible/awx-logos/archive/7064a4635a3f857c67a5f5a8608ca52c27cdf26c.zip</a></p>
+<p>Rename awx-logos-master folder as awx-logos
+mv awx-logos-master awx-logos</p>
+<p>Remove archive
+rm -f <em>awx</em>.tar.gz</p>
+<h3 id="set-awx-parameters">Set AWX parameters</h3>
+<p>Change dir to awx and replace awx_official parameter
+cd awx-$LATEST_AWX
+sed -i -E “s|^#([[:space:]]?)awx_official=false|awx_official=true|g” installer/inventory</p>
+<p>Define the default admin username
+sed -i “s|^admin_user=.*|admin_user=<admin-user>|g” installer/inventory</admin-user></p>
+<p>Set a password for the admin
+sed -i “s|^admin_password=.*|admin_password=<admin-pw>|g” installer/inventory</admin-pw></p>
+<p>Set awx secret_key
+sed -i “s|^secret_key=.*|secret_key=<key>|g” installer/inventory</key></p>
+<p>Set password for rabbitmq
+sed -i “s|^rabbitmq_password=.*|rabbitmq_password=<mq-pw>|g” installer/inventory</mq-pw></p>
+<p>Set postgresql username
+sed -i “s|^pg_username=.*|pg_username=<pg-user>|g” installer/inventory</pg-user></p>
+<p>Set postgresql password
+sed -i “s|^pg_password=.*|pg_password=<pg-pw>|g” installer/inventory</pg-pw></p>
+<h3 id="start-awx-installation">Start AWX Installation</h3>
+<p>stop firewall for installation (otherwise docker containers cant access internet)
+systemctl stop firewalld
+systemctl restart docker</p>
+<p>Enter the installer directory.
+cd ~/awx-$LATEST_AWX/installer</p>
+<p>Initiate install.yml
+ansible-playbook -i inventory install.yml</p>
+<p>Great! The playbook will now start to build the docker-containers and launch them.</p>
+<p>After this you can log in with the admin user credentials at <a href="https://servername/#/login">https://servername/#/login</a></p>
+<p><em>start firewall again after installation is finished!!</em>
+systemctl start firewalld</p>
+<h3 id="optional-configure-ldap-connect-to-ad-server">Optional: Configure LDAP connect to AD-Server</h3>
+<p>Login to the UI via https://<servername>/ and the credentials of admin user from above</servername></p>
+<p>Go to Seetings → Auth → LDAP</p>
+<p>LDAP SERVER URI
+ldap://<server>:<port>
+or better
+laps://<server>:<port></port></server></port></server></p>
+<p>LDAP BIND DN
+CN=<cn>,OU=<ou>,OU=<ou>,DC=<dc>,DC=<dc></dc></dc></ou></ou></cn></p>
+<p>LDAP Bind Password
+<user-password></user-password></p>
+<p>LDAP REQUIRE GROUP
+CN=<cn>,OU=<ou>,OU=<ou>,DC=<dc>,DC=<dc></dc></dc></ou></ou></cn></p>
+<p>LDAP USER SEARCH
+[
+“DC=<dc>,DC=<dc>”,
+“SCOPE_SUBTREE”,
+“(sAMAccountName=%(user)s)”
+]</dc></dc></p>
+<p>LDAP GROUP SEARCH
+[
+“DC=<dc>,DC=<dc>”,
+“SCOPE_SUBTREE”,
+“(objectClass=group)”
+]</dc></dc></p>
+<p>LDAP USER ATTRIBUTE MAP
+{
+“first_name”: “givenName”,
+“last_name”: “sn”,
+“email”: “mail”
+}</p>
+<p>Awesome! Now you can grant your Users in your LDAP Group access to AWX!</p>  </div> <aside class="hidden lg:block"> <div class="sticky top-20"> <nav class="glass-panel p-4 text-sm" aria-label="Table of contents"><h2 class="font-semibold text-heading mb-3">Contents</h2><ul class="space-y-1.5"><li class><a href="#install-awx" class="text-muted hover:text-cyan transition-colors">Install AWX</a></li><li class="ml-4"><a href="#install-needed-tools" class="text-muted hover:text-cyan transition-colors">Install needed tools</a></li><li class="ml-4"><a href="#configure-stuff" class="text-muted hover:text-cyan transition-colors">Configure stuff</a></li><li class="ml-4"><a href="#set-awx-parameters" class="text-muted hover:text-cyan transition-colors">Set AWX parameters</a></li><li class="ml-4"><a href="#start-awx-installation" class="text-muted hover:text-cyan transition-colors">Start AWX Installation</a></li><li class="ml-4"><a href="#optional-configure-ldap-connect-to-ad-server" class="text-muted hover:text-cyan transition-colors">Optional: Configure LDAP connect to AD-Server</a></li></ul></nav> </div> </aside> </div> <section class="mt-12 w-full" aria-label="Comments" data-astro-cid-an2nl7ar> <div class="giscus-wrapper" data-astro-cid-an2nl7ar> <script src="https://giscus.app/client.js" data-repo="t0st/t0st.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkzMzgxMzk5ODQ=" data-category="Comments" data-category-id="MDE4OkRpc2N1c3Npb25DYXRlZ29yeTMyNTczOTU0" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="https://tost.dev/giscus.css" data-lang="en" crossorigin="anonymous" async></script> </div> </section> </article> </main> <footer class="border-t border-border/50 mt-auto py-8"> <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted"> <span>&copy; 2026 tost.dev</span> <div class="flex gap-4"> <a href="https://github.com/t0st" target="_blank" rel="noopener noreferrer" class="hover:text-cyan transition-colors" aria-label="GitHub"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path> </svg> </a> <a href="/rss.xml" class="hover:text-cyan transition-colors" aria-label="RSS Feed"> <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M6.18 15.64a2.18 2.18 0 010 4.36 2.18 2.18 0 010-4.36M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z"></path> </svg> </a> </div> </div> </footer>  </body></html>
